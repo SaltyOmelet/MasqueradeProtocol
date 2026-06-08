@@ -435,9 +435,6 @@ function updateProgress(){
  const total=(recovered.n1?1:0)+(recovered.n2?1:0)+(recovered.n3?1:0);
  document.getElementById("progress").innerText="Recovered Nodes: "+total+" / 3";
 
- if(total===3){
-   showPopup('<h2>ORACLE ARCHIVE RECOVERY COMPLETE</h2>Recovered Communications: 3 / 3<br><br>The recovered records have been added to the investigation.<br><br>Return to Adrian\'s residence and continue the search.');
- }
 }
 </script>
 </div>
