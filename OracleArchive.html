@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE Archive Recovery</title>
+
+<style>
+body{
+    font-family: Consolas, monospace;
+    text-align:center;
+    margin:0;
+    background:#000;
+    color:#00ff41;
+}
+
+#menu{display:block;padding-top:80px;}
+#gameUI{display:none;}
+
+button{
+    padding:15px 25px;
+    margin:10px;
+    font-size:18px;
+    background:#000;
+    color:#00ff41;
+    border:1px solid #00ff41;
+    cursor:pointer;
+}
+
+canvas{
+    border:2px solid #00ff41;
+    margin-top:10px;
+}
+
+#progress{
+    font-size:20px;
+    margin-top:10px;
+}
+
+#controls{margin-top:15px;}
+.arrow-btn{
+    width:70px;
+    height:70px;
+    font-size:24px;
+}
+
+#popup{
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:black;
+    border:2px solid #00ff41;
+    padding:20px;
+    max-width:500px;
+    z-index:1000;
+}
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+<h1>ORACLE ARCHIVE</h1>
+<h2>EMERGENCY RECOVERY MODE</h2>
+
+<p>The Eclipse Tower blackout corrupted multiple archive sectors.</p>
+<p>Three communication records remain intact.</p>
+<p>Navigate the archive and recover the data.</p>
+
+<p>WARNING: Archive pathways are unstable.<br>
+Incorrect routes may trigger a system reset.</p>
+
+<button onclick="startGame()">BEGIN RECOVERY</button>
+</div>
+
+<div id="gameUI">
+<h2>ORACLE ARCHIVE</h2>
+
+<div id="progress">Recovered Nodes: 0 / 3</div>
+
+<canvas id="gameCanvas" width="500" height="500"></canvas>
+
+<div id="controls">
+<div><button class="arrow-btn" onclick="move('up')">⬆️</button></div>
+<div>
+<button class="arrow-btn" onclick="move('left')">⬅️</button>
+<button class="arrow-btn" onclick="move('down')">⬇️</button>
+<button class="arrow-btn" onclick="move('right')">➡️</button>
+</div>
+</div>
+</div>
+
+<div id="popup">
+<div id="popupText"></div>
+<br>
+<button onclick="closePopup()">CONTINUE</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const tileSize = 25;
+
+const maze = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+[1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1,0,1],
+[1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1],
+[1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
+[1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,0,1],
+[1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1,0,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,1],
+[1,0,1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1,0,1],
+[1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,0,1],
+[1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+[1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1],
+[1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1],
+[1,0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
+[1,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+[1,0,1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1],
+[1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],
+[1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+let player = {x:1,y:1};
+
+const node1={x:18,y:1};
+const node2={x:2,y:17};
+const node3={x:18,y:18};
+
+let recovered={n1:false,n2:false,n3:false};
+
+function startGame(){
+ document.getElementById("menu").style.display="none";
+ document.getElementById("gameUI").style.display="block";
+ draw();
+}
+
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ for(let y=0;y<maze.length;y++){
+  for(let x=0;x<maze[y].length;x++){
+   if(maze[y][x]===1){
+    ctx.fillStyle="#00ff41";
+    ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+   }
+  }
+ }
+
+ ctx.fillStyle="#39ff14";
+ ctx.font="14px Consolas";
+
+ if(!recovered.n1) ctx.fillText("N1", node1.x*tileSize+2,node1.y*tileSize+16);
+ else ctx.fillText("✓", node1.x*tileSize+6,node1.y*tileSize+16);
+
+ if(!recovered.n2) ctx.fillText("N2", node2.x*tileSize+2,node2.y*tileSize+16);
+ else ctx.fillText("✓", node2.x*tileSize+6,node2.y*tileSize+16);
+
+ if(!recovered.n3) ctx.fillText("N3", node3.x*tileSize+2,node3.y*tileSize+16);
+ else ctx.fillText("✓", node3.x*tileSize+6,node3.y*tileSize+16);
+
+ ctx.fillStyle="#ffffff";
+ ctx.beginPath();
+ ctx.arc(player.x*tileSize+tileSize/2, player.y*tileSize+tileSize/2, 8,0,Math.PI*2);
+ ctx.fill();
+
+ requestAnimationFrame(draw);
+}
+
+function move(direction){
+ let newX=player.x;
+ let newY=player.y;
+
+ if(direction==="up") newY--;
+ if(direction==="down") newY++;
+ if(direction==="left") newX--;
+ if(direction==="right") newX++;
+
+ const hitWall =
+ newY<0 || newY>=maze.length ||
+ newX<0 || newX>=maze[0].length ||
+ maze[newY][newX]===1;
+
+ if(hitWall){
+   showPopup("<h3>ARCHIVE CORRUPTION DETECTED</h3>Recovery sequence restarted.");
+   player.x=1;
+   player.y=1;
+   return;
+ }
+
+ player.x=newX;
+ player.y=newY;
+
+ checkNodes();
+}
+
+function checkNodes(){
+
+ if(player.x===node1.x && player.y===node1.y && !recovered.n1){
+  recovered.n1=true;
+  showPopup("<h3>COMMUNICATION RECOVERED</h3>FROM: Adrian Voss<br><br>I have made my decision.<br><br>The transition will occur after the presentation.<br><br>We will discuss details Monday.");
+ }
+
+ if(player.x===node2.x && player.y===node2.y && !recovered.n2){
+  recovered.n2=true;
+  showPopup("<h3>FINANCIAL REPORT RECOVERED</h3>Projected Continuum Impact<br><br>Competitor Revenue Loss<br><br>84%");
+ }
+
+ if(player.x===node3.x && player.y===node3.y && !recovered.n3){
+  recovered.n3=true;
+  showPopup("<h3>PRIVATE MESSAGE RECOVERED</h3>'If you release that information, everything I've built is over.'<br><br>'Then perhaps you should have been honest from the beginning.'<br><br>- Adrian Voss");
+ }
+
+ updateProgress();
+
+ if(recovered.n1 && recovered.n2 && recovered.n3){
+  showPopup("<h2>ORACLE ARCHIVE RECOVERY COMPLETE</h2>Recovered Communications: 3 / 3<br><br>The recovered records have been added to the investigation.<br><br>Return to Adrian's residence and continue the search.");
+ }
+}
+
+function updateProgress(){
+ const total=(recovered.n1?1:0)+(recovered.n2?1:0)+(recovered.n3?1:0);
+ document.getElementById("progress").innerText="Recovered Nodes: "+total+" / 3";
+}
+
+function showPopup(text){
+ document.getElementById("popupText").innerHTML=text;
+ document.getElementById("popup").style.display="block";
+}
+
+function closePopup(){
+ document.getElementById("popup").style.display="none";
+}
+
+document.addEventListener("keydown",(e)=>{
+ if(e.key==="ArrowUp") move("up");
+ if(e.key==="ArrowDown") move("down");
+ if(e.key==="ArrowLeft") move("left");
+ if(e.key==="ArrowRight") move("right");
+});
+</script>
+
+</body>
+</html>
