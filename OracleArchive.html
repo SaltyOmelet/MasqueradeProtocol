@@ -344,7 +344,7 @@ function gameLoop(){
   }
 
 
-  ctx.fillStyle='#39ff14';
+  ctx.fillStyle='#ffffff';
   ctx.font='14px Consolas';
   checkpoints.forEach(cp=>{
     if(!recovered[cp.id]){
@@ -402,6 +402,8 @@ function startOracle(){
 }
 
 let recovered={n1:false,n2:false,n3:false};
+let popupQueue=[];
+let popupOpen=false;
 
 const checkpoints=[
  {id:'n1',x:110,y:95,text:'<h3>COMMUNICATION RECOVERED</h3>FROM: Adrian Voss<br><br>I have made my decision. The transition will occur after the presentation.'},
@@ -413,16 +415,28 @@ function showPopup(t){
  document.getElementById('popupText').innerHTML=t;
  document.getElementById('popup').style.display='block';
 }
+function displayNextPopup(){
+ if(popupQueue.length===0){
+   popupOpen=false;
+   return;
+ }
+ popupOpen=true;
+ const text=popupQueue.shift();
+ document.getElementById("popupText").innerHTML=text;
+ document.getElementById("popup").style.display="block";
+}
+
 function closePopup(){
- document.getElementById('popup').style.display='none';
+ document.getElementById("popup").style.display="none";
+ displayNextPopup();
 }
 
 function updateProgress(){
  const total=(recovered.n1?1:0)+(recovered.n2?1:0)+(recovered.n3?1:0);
- const el=document.getElementById('progress');
- if(el) el.innerText='Recovered Nodes: '+total+' / 3';
+ document.getElementById("progress").innerText="Recovered Nodes: "+total+" / 3";
+
  if(total===3){
-   showPopup('<h2>ORACLE ARCHIVE RECOVERY COMPLETE</h2>All communications recovered. Return to the investigation.');
+   showPopup('<h2>ORACLE ARCHIVE RECOVERY COMPLETE</h2>Recovered Communications: 3 / 3<br><br>The recovered records have been added to the investigation.<br><br>Return to Adrian\'s residence and continue the search.');
  }
 }
 </script>
