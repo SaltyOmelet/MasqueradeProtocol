@@ -285,7 +285,7 @@ const keys = {};
 function drawPlayer(){
   ctx.beginPath();
   ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#00BFFF";
   ctx.fill();
 }
 
@@ -359,7 +359,7 @@ function gameLoop(){
     const dy=player.y-cp.y;
     if(!recovered[cp.id] && Math.sqrt(dx*dx+dy*dy)<10){
       recovered[cp.id]=true;
-      showPopup(cp.text);
+      showImagePopup(cp.image);
       updateProgress();
     }
   });
@@ -390,9 +390,35 @@ window.addEventListener("keyup",e=>{
 canvas.focus();
 </script>
 
-<div id="popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#000;border:none;padding:20px;max-width:500px;z-index:9999">
-<div id="popupText"></div><br>
-<button onclick="closePopup()">CONTINUE</button>
+<div id="popup"
+style="
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#000;
+padding:20px;
+z-index:9999;
+">
+
+<img
+id="popupImage"
+style="
+display:none;
+max-width:90vw;
+max-height:80vh;
+border:2px solid #00ff41;
+">
+
+<div id="popupText"></div>
+
+<br>
+
+<button onclick="closePopup()">
+CONTINUE
+</button>
+
 </div>
 
 <script>
@@ -402,8 +428,6 @@ function startOracle(){
 }
 
 let recovered={n1:false,n2:false,n3:false};
-let popupQueue=[];
-let popupOpen=false;
 
 const checkpoints = [
 {
@@ -430,20 +454,29 @@ function showPopup(t){
  document.getElementById('popupText').innerHTML=t;
  document.getElementById('popup').style.display='block';
 }
-function displayNextPopup(){
- if(popupQueue.length===0){
-   popupOpen=false;
-   return;
- }
- popupOpen=true;
- const text=popupQueue.shift();
- document.getElementById("popupText").innerHTML=text;
- document.getElementById("popup").style.display="block";
+function showImagePopup(imagePath){
+
+    const img =
+        document.getElementById("popupImage");
+
+    img.src = imagePath;
+
+    img.style.display = "block";
+
+    document.getElementById("popupText").innerHTML = "";
+
+    document.getElementById("popup").style.display =
+        "block";
 }
 
+
 function closePopup(){
- document.getElementById("popup").style.display="none";
- displayNextPopup();
+
+    document.getElementById("popup").style.display =
+        "none";
+
+    document.getElementById("popupImage").style.display =
+        "none";
 }
 
 function updateProgress(){
