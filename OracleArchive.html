@@ -405,10 +405,25 @@ let recovered={n1:false,n2:false,n3:false};
 let popupQueue=[];
 let popupOpen=false;
 
-const checkpoints=[
- {id:'n1',x:110,y:95,text:'<h3>COMMUNICATION RECOVERED</h3>FROM: Adrian Voss<br><br>I have made my decision. The transition will occur after the presentation.'},
- {id:'n2',x:315,y:120,text:'<h3>FINANCIAL REPORT RECOVERED</h3>Projected Competitor Revenue Loss<br><br>84%'},
- {id:'n3',x:280,y:315,text:'<h3>PRIVATE MESSAGE RECOVERED</h3>If you release that information, everything I built is over.<br><br>- Adrian Voss'}
+const checkpoints = [
+{
+    id:"n1",
+    x:110,
+    y:95,
+    image:"Silver_Email.png"
+},
+{
+    id:"n2",
+    x:315,
+    y:120,
+    image:"Gold_Transcript.png"
+},
+{
+    id:"n3",
+    x:280,
+    y:315,
+    image:"Pink_DM.png"
+}
 ];
 
 function showPopup(t){
