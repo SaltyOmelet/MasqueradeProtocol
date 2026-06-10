@@ -9,7 +9,19 @@ margin:0;
 font-family:Arial,sans-serif;
 text-align:center;
 color:white;
-background:linear-gradient(135deg,#4f46e5,#9333ea,#ec4899,#f59e0b);
+
+background:linear-gradient(
+ -45deg,
+ #4f46e5,
+ #9333ea,
+ #ec4899,
+ #f59e0b
+);
+
+background-size:400% 400%;
+
+animation:bgShift 15s ease infinite;
+
 min-height:100vh;
 }
 canvas{
@@ -31,11 +43,73 @@ max-width:500px;
 z-index:999;
 }
 button{padding:10px 20px;}
+@keyframes bgShift{
+
+ 0%{
+  background-position:0% 50%;
+ }
+
+ 50%{
+  background-position:100% 50%;
+ }
+
+ 100%{
+  background-position:0% 50%;
+ }
+
+}
+@keyframes floatTitle{
+
+ 0%{
+  transform:translateY(0px);
+ }
+
+ 50%{
+  transform:translateY(-8px);
+ }
+
+ 100%{
+  transform:translateY(0px);
+ }
+
+}
+
+@keyframes glowTitle{
+
+ 0%{
+  text-shadow:
+   0 0 10px rgba(255,255,255,.3);
+ }
+
+ 50%{
+  text-shadow:
+   0 0 30px rgba(255,255,255,.8);
+ }
+
+ 100%{
+  text-shadow:
+   0 0 10px rgba(255,255,255,.3);
+ }
+
+}
+#journalTitle{
+
+ font-size:42px;
+
+ text-shadow:
+  0 0 15px rgba(255,255,255,.5);
+
+ animation:
+  floatTitle 4s ease-in-out infinite,
+  glowTitle 3s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
 
-<h1>Adrian's Digital Journal</h1>
+<h1 id="journalTitle">
+Adrian's Digital Journal
+</h1>
 <h3 id="levelTitle">Memory Reconstruction - Level 1</h3>
 <p>Rotate mirrors to guide the memory stream to the golden memory orb.</p>
 
@@ -50,7 +124,22 @@ button{padding:10px 20px;}
 <script>
 const canvas=document.getElementById("board");
 const ctx=canvas.getContext("2d");
+const particles=[];
 
+for(let i=0;i<50;i++){
+
+ particles.push({
+
+  x:Math.random()*600,
+  y:Math.random()*600,
+
+  speed:0.2+Math.random()*0.6,
+
+  size:1+Math.random()*3
+
+ });
+
+}
 let SIZE=6;
 let CELL=100;
 
@@ -61,7 +150,7 @@ const levels=[
 {
  size:6,
 
- target:{x:5,y:5},
+ target:{x:4,y:5},
 
  mirrors:{
   "1,0":"slash",
@@ -81,7 +170,7 @@ const levels=[
 {
  size:8,
 
- target:{x:7,y:7},
+ target:{x:6,y:1},
 
  mirrors:{
   "1,0":"slash",
@@ -105,7 +194,7 @@ const levels=[
 {
  size:10,
 
- target:{x:9,y:9},
+ target:{x:2,y:8},
 
  mirrors:{
   "1,0":"slash",
@@ -217,13 +306,33 @@ function traceLaser(){
 
 function draw(){
 
- ctx.clearRect(
-  0,
-  0,
-  canvas.width,
-  canvas.height
- );
+ ctx.clearRect(0,0,canvas.width,canvas.height);
 
+ particles.forEach(p=>{
+ 
+  p.y-=p.speed;
+ 
+  if(p.y<0){
+   p.y=600;
+  }
+ 
+  ctx.fillStyle=
+   "rgba(255,255,255,.25)";
+ 
+  ctx.beginPath();
+ 
+  ctx.arc(
+   p.x,
+   p.y,
+   p.size,
+   0,
+   Math.PI*2
+  );
+ 
+  ctx.fill();
+ 
+ });
+ 
  for(let x=0;x<SIZE;x++){
   for(let y=0;y<SIZE;y++){
 
@@ -263,21 +372,30 @@ function draw(){
  );
  ctx.fill();
 
+ const orbPulse=
+  Math.sin(Date.now()*0.005)*4;
+ 
  ctx.fillStyle="#facc15";
+ 
  ctx.beginPath();
+ 
  ctx.arc(
   target.x*CELL+CELL/2,
   target.y*CELL+CELL/2,
-  Math.max(10,CELL*0.22),
+  Math.max(10,CELL*0.22)+orbPulse,
   0,
   Math.PI*2
  );
- ctx.fill();
+
+ctx.fill();
 
  const laser=traceLaser();
 
+ const pulse=
+  4 + Math.sin(Date.now()*0.008)*2;
+ 
  ctx.strokeStyle="#22d3ee";
- ctx.lineWidth=6;
+ ctx.lineWidth=pulse;
  ctx.beginPath();
 
  laser.pts.forEach((p,i)=>{
@@ -335,11 +453,19 @@ canvas.addEventListener("click",(e)=>{
 
  if(mirrors[key]){
    mirrors[key]=mirrors[key]==="slash"?"back":"slash";
-   draw();
  }
 });
 
+function animate(){
+
+ draw();
+
+ requestAnimationFrame(animate);
+
+}
+ 
 loadLevel(0);
+animate();
 </script>
 </body>
 </html>
