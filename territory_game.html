@@ -319,6 +319,9 @@
       <button class="rotate-btn" id="rotateBtn" onclick="rotateSelected()" style="margin-top:8px">↻ ROTATE PIECE</button>
       <button class="discard-btn" id="discardBtn" onclick="discardSelected()" style="margin-top:4px">↯ DISCARD (draws new)</button>
     </div>
+    <div class="turn-badge" id="roundBadge">
+      ROUND 1 / 10
+    </div>
   </div>
 
   <!-- BOARD -->
@@ -404,7 +407,7 @@
 // ═══════════════════════════════════════════════
 
 const COLS = 20, ROWS = 18, CELL = 32;
-const OWNER_NONE = 0, OWNER_P = 1, OWNER_AI = 2, OWNER_BLOCKED = 3;
+const OWNER_NONE = 0, OWNER_P = 1, OWNER_AI = 2, OWNER_BLOCKED = 3; OWNER_P_BASE = 4; OWNER_AI_BASE = 5;
 
 // Piece definitions: arrays of [row, col] offsets
 const PIECE_DEFS = [
@@ -431,6 +434,8 @@ const PIECE_DEFS = [
 // ── State
 let board, deck, playerHand, aiHand, turn, selectedIdx, hoverCell, selectedRotation, discardUsed;
 let animQueue = [];
+let roundNumber;
+const MAX_ROUNDS = 10;
 
 // ── Canvas
 const canvas = document.getElementById('gameCanvas');
@@ -438,6 +443,12 @@ const ctx = canvas.getContext('2d');
 canvas.width  = COLS * CELL;
 canvas.height = ROWS * CELL;
 
+// Starting Bases 
+function placeBases() {
+  board[ROWS - 2][1] = OWNER_P_BASE;      // Player base
+  board[1][COLS - 2] = OWNER_AI_BASE;     // AI base
+}
+  
 // ── Piece utilities
 function rotateCells(cells) {
   // 90° CW: [r,c] → [c, -r]
@@ -500,12 +511,22 @@ function emptyBoard() {
 function inBounds(r, c) { return r>=0 && r<ROWS && c>=0 && c<COLS; }
 
 function canPlace(cells, anchorR, anchorC, owner) {
+
   for (const [dr,dc] of cells) {
-    const r=anchorR+dr, c=anchorC+dc;
+
+    const r = anchorR + dr;
+    const c = anchorC + dc;
+
     if (!inBounds(r,c)) return false;
     if (board[r][c] !== OWNER_NONE) return false;
   }
-  return true;
+
+  return hasAdjacentFriendly(
+    cells,
+    anchorR,
+    anchorC,
+    owner
+  );
 }
 
 function placePiece(cells, anchorR, anchorC, owner) {
@@ -560,6 +581,13 @@ const BORDER_MAP = {
   [OWNER_BLOCKED]: '#383e48',
 };
 
+// Base Colors 
+COLOR_MAP[OWNER_P_BASE] = '#4fb6ff';
+COLOR_MAP[OWNER_AI_BASE] = '#ff7070';
+
+BORDER_MAP[OWNER_P_BASE] = '#9ad7ff';
+BORDER_MAP[OWNER_AI_BASE] = '#ffb0b0';
+  
 function drawBoard() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -609,6 +637,32 @@ function drawBoard() {
   ctx.textAlign='center'; ctx.textBaseline='top';
   for (let r=0;r<ROWS;r+=4) for (let c=0;c<COLS;c+=4) {
     ctx.fillText(`${c},${r}`, c*CELL+CELL/2, r*CELL+2);
+  }
+
+  // Bases 
+  if (v === OWNER_P_BASE) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(
+      x + CELL/2,
+      y + CELL/2,
+      CELL*0.22,
+      0,
+      Math.PI*2
+    );
+    ctx.fill();
+  }  
+  if (v === OWNER_AI_BASE) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(
+      x + CELL/2,
+      y + CELL/2,
+      CELL*0.22,
+      0,
+      Math.PI*2
+    );
+    ctx.fill();
   }
 }
 
@@ -743,6 +797,8 @@ function updateHUD() {
   document.getElementById('scoreA').textContent = sa;
   document.getElementById('progBar').style.setProperty('--pct', pct+'%');
   document.getElementById('tilesLeft').textContent = countEmpty();
+  document.getElementById("roundBadge").textContent =
+  `ROUND ${roundNumber} / ${MAX_ROUNDS}`;
 }
 
 function setMsg(text, type='') {
@@ -856,7 +912,12 @@ function aiTurn() {
 
   // Check end condition
   if (checkGameOver()) return;
+  roundNumber++;
 
+  if (roundNumber > MAX_ROUNDS) {
+    endGame();
+    return;
+  }
   turn = 'player';
   document.getElementById('turnBadge').textContent = 'YOUR TURN';
   document.getElementById('turnBadge').className = 'turn-badge player-turn';
@@ -920,6 +981,8 @@ function startGame() {
   document.getElementById('endOverlay').classList.remove('active');
   board = emptyBoard();
   addTerrain();
+  placeBases();
+  roundNumber = 1;
   deck = createDeck();
   playerHand = dealHand(5);
   aiHand = dealHand(5);
@@ -935,6 +998,43 @@ function startGame() {
   drawBoard();
   updateHUD();
   setMsg('Your turn — select a piece from your hand.', '');
+}
+
+// Territory Connectivity Check 
+
+function hasAdjacentFriendly(cells, anchorR, anchorC, owner) {
+
+  const validOwners =
+    owner === OWNER_P
+      ? [OWNER_P, OWNER_P_BASE]
+      : [OWNER_AI, OWNER_AI_BASE];
+
+  const dirs = [
+    [-1,0],
+    [1,0],
+    [0,-1],
+    [0,1]
+  ];
+
+  for (const [dr,dc] of cells) {
+
+    const r = anchorR + dr;
+    const c = anchorC + dc;
+
+    for (const [rr,cc] of dirs) {
+
+      const nr = r + rr;
+      const nc = c + cc;
+
+      if (!inBounds(nr,nc)) continue;
+
+      if (validOwners.includes(board[nr][nc])) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 // Kick off
