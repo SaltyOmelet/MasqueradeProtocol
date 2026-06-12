@@ -6,26 +6,26 @@
 <title>TERRANOVA — Territory Card Game</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
-
+ 
   :root {
-    --bg:       #0d1117;
-    --surface:  #161b22;
-    --border:   #30363d;
-    --player:   #3b8eff;
-    --player-glow: rgba(59,142,255,0.35);
-    --ai:       #e05252;
-    --ai-glow:  rgba(224,82,82,0.35);
-    --neutral:  #21262d;
-    --grid:     #1c2128;
-    --text:     #e6edf3;
-    --muted:    #8b949e;
-    --accent:   #f0a500;
-    --mono:     'Share Tech Mono', monospace;
-    --sans:     'Barlow', sans-serif;
+    --bg:         #0d1117;
+    --surface:    #161b22;
+    --border:     #30363d;
+    --player:     #3b8eff;
+    --player-glow:rgba(59,142,255,0.35);
+    --ai:         #e05252;
+    --ai-glow:    rgba(224,82,82,0.35);
+    --neutral:    #21262d;
+    --grid:       #1c2128;
+    --text:       #e6edf3;
+    --muted:      #8b949e;
+    --accent:     #f0a500;
+    --mono:       'Share Tech Mono', monospace;
+    --sans:       'Barlow', sans-serif;
   }
-
+ 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
   body {
     background: var(--bg);
     color: var(--text);
@@ -36,8 +36,7 @@
     align-items: center;
     overflow-x: hidden;
   }
-
-  /* ── HEADER ── */
+ 
   header {
     width: 100%;
     padding: 14px 32px;
@@ -47,13 +46,22 @@
     border-bottom: 1px solid var(--border);
     background: var(--surface);
   }
-  .logo {
-    font-family: var(--mono);
-    font-size: 1.25rem;
-    letter-spacing: 0.18em;
-    color: var(--accent);
-  }
+  .logo { font-family: var(--mono); font-size: 1.25rem; letter-spacing: 0.18em; color: var(--accent); }
   .logo span { color: var(--muted); font-size: 0.75rem; display: block; letter-spacing: 0.06em; margin-top: 1px; }
+ 
+  .header-right { display: flex; align-items: center; gap: 14px; }
+ 
+  .round-pill {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: var(--neutral);
+  }
+ 
   .turn-badge {
     font-family: var(--mono);
     font-size: 0.8rem;
@@ -65,9 +73,8 @@
     transition: all 0.3s;
   }
   .turn-badge.player-turn { border-color: var(--player); color: var(--player); box-shadow: 0 0 10px var(--player-glow); }
-  .turn-badge.ai-turn    { border-color: var(--ai);     color: var(--ai);     box-shadow: 0 0 10px var(--ai-glow); }
-
-  /* ── MAIN LAYOUT ── */
+  .turn-badge.ai-turn     { border-color: var(--ai);     color: var(--ai);     box-shadow: 0 0 10px var(--ai-glow); }
+ 
   .game-shell {
     display: flex;
     gap: 16px;
@@ -76,16 +83,9 @@
     width: 100%;
     max-width: 1280px;
   }
-
-  /* ── SIDE PANELS ── */
-  .side-panel {
-    width: 220px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
+ 
+  .side-panel { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+ 
   .panel-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -100,38 +100,20 @@
     text-transform: uppercase;
     margin-bottom: 10px;
   }
-
-  .score-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
+ 
+  .score-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
   .score-label { font-size: 0.78rem; color: var(--muted); width: 64px; }
-  .score-value {
-    font-family: var(--mono);
-    font-size: 1.6rem;
-    font-weight: bold;
-    line-height: 1;
-  }
+  .score-value { font-family: var(--mono); font-size: 1.6rem; font-weight: bold; line-height: 1; }
   .score-value.p { color: var(--player); text-shadow: 0 0 12px var(--player-glow); }
   .score-value.a { color: var(--ai);     text-shadow: 0 0 12px var(--ai-glow); }
-
-  .progress-bar {
-    height: 6px;
-    background: var(--neutral);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 2px;
-    margin-bottom: 10px;
-  }
+ 
+  .progress-bar { height: 6px; background: var(--neutral); border-radius: 3px; overflow: hidden; margin-top: 2px; margin-bottom: 10px; }
   .progress-bar .fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--player), var(--player) var(--pct), var(--ai) var(--pct), var(--ai));
+    background: linear-gradient(90deg, var(--player) 0%, var(--player) var(--pct), var(--ai) var(--pct), var(--ai) 100%);
     transition: all 0.5s ease;
   }
-
-  /* hand cards */
+ 
   .hand-area { display: flex; flex-direction: column; gap: 8px; }
   .card-btn {
     background: var(--neutral);
@@ -140,20 +122,17 @@
     padding: 10px;
     cursor: pointer;
     transition: all 0.15s;
-    position: relative;
     text-align: center;
   }
   .card-btn:hover { border-color: var(--player); background: #1f2937; transform: translateX(3px); }
-  .card-btn.selected {
-    border-color: var(--player);
-    background: rgba(59,142,255,0.1);
-    box-shadow: 0 0 12px var(--player-glow);
-  }
+  .card-btn.selected { border-color: var(--player); background: rgba(59,142,255,0.1); box-shadow: 0 0 12px var(--player-glow); }
   .card-btn canvas { display: block; margin: 0 auto 6px; image-rendering: pixelated; }
   .card-name { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; }
   .card-size { font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
-
-  .discard-btn {
+ 
+  .action-btn {
+    width: 100%;
+    margin-top: 6px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -165,34 +144,12 @@
     letter-spacing: 0.08em;
     transition: all 0.2s;
   }
-  .discard-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .discard-btn:disabled { opacity: 0.35; cursor: default; }
-
-  .rotate-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    cursor: pointer;
-    letter-spacing: 0.08em;
-    transition: all 0.2s;
-    margin-top: 4px;
-  }
-  .rotate-btn:hover { border-color: var(--player); color: var(--player); }
-  .rotate-btn:disabled { opacity: 0.35; cursor: default; }
-
-  /* ── BOARD ── */
-  .board-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
+  .action-btn:hover:not(:disabled) { border-color: var(--player); color: var(--player); }
+  .action-btn.danger:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .action-btn:disabled { opacity: 0.35; cursor: default; }
+ 
+  .board-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+ 
   #gameCanvas {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -201,7 +158,7 @@
     background: var(--grid);
     box-shadow: 0 0 40px rgba(0,0,0,0.6);
   }
-
+ 
   .board-msg {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -213,19 +170,13 @@
   .board-msg.ok   { color: #58a65c; }
   .board-msg.err  { color: var(--ai); }
   .board-msg.info { color: var(--accent); }
-
-  /* ── AI LOG ── */
-  #aiLog {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--muted);
-    line-height: 1.7;
-  }
+ 
+  #aiLog { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); line-height: 1.7; }
   #aiLog .entry { border-bottom: 1px solid var(--neutral); padding: 3px 0; }
   #aiLog .entry:last-child { border: none; }
   #aiLog .label { color: var(--ai); }
-
-  /* ── OVERLAY ── */
+ 
+  /* Overlays */
   .overlay {
     display: flex;
     visibility: hidden;
@@ -239,36 +190,39 @@
     justify-content: center;
     transition: opacity 0.2s;
   }
-  .overlay.active {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: all;
-  }
+  .overlay.active { visibility: visible; opacity: 1; pointer-events: all; }
+ 
   .modal {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 40px 48px;
     text-align: center;
-    max-width: 460px;
+    max-width: 480px;
+    width: 90%;
     animation: popIn 0.25s ease;
   }
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.88); }
     to   { opacity: 1; transform: scale(1); }
   }
-  .modal .title {
+  .modal .m-title {
     font-family: var(--mono);
     font-size: 2rem;
     letter-spacing: 0.12em;
     margin-bottom: 6px;
   }
-  .modal .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .modal .m-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 28px; line-height: 1.6; }
   .modal .result-row { display: flex; justify-content: center; gap: 40px; margin-bottom: 28px; }
-  .modal .res-block { text-align: center; }
   .modal .res-score { font-family: var(--mono); font-size: 2.8rem; font-weight: 900; line-height: 1; }
   .modal .res-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 4px; }
-  .play-again {
+ 
+  .logo-big { font-family: var(--mono); font-size: 2.4rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 4px; }
+  .tagline { color: var(--muted); font-size: 0.85rem; margin-bottom: 24px; letter-spacing: 0.05em; }
+  .rules { list-style: none; text-align: left; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; line-height: 2.1; }
+  .rules li::before { content: '›  '; color: var(--accent); }
+ 
+  .cta-btn {
     background: var(--accent);
     color: var(--bg);
     border: none;
@@ -281,56 +235,38 @@
     cursor: pointer;
     transition: opacity 0.2s;
   }
-  .play-again:hover { opacity: 0.85; }
-
-
-  .start-modal .logo-big {
-    font-family: var(--mono);
-    font-size: 2.4rem;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-  .start-modal .tagline { color: var(--muted); font-size: 0.85rem; margin-bottom: 32px; letter-spacing: 0.05em; }
-  .start-modal ul {
-    list-style: none;
-    text-align: left;
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin-bottom: 32px;
-    line-height: 2;
-  }
-  .start-modal ul li::before { content: '›  '; color: var(--accent); }
+  .cta-btn:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
-
+ 
 <header>
   <div class="logo">TERRANOVA <span>TERRITORY CARD GAME</span></div>
-  <div class="turn-badge" id="turnBadge">YOUR TURN</div>
+  <div class="header-right">
+    <div class="round-pill" id="roundBadge">ROUND 1 / 10</div>
+    <div class="turn-badge player-turn" id="turnBadge">YOUR TURN</div>
+  </div>
 </header>
-
+ 
 <div class="game-shell">
-  <!-- LEFT PANEL: Player hand -->
-  <div class="side-panel" id="leftPanel">
+ 
+  <!-- LEFT: Player hand -->
+  <div class="side-panel">
     <div class="panel-card">
       <h3>Your Hand</h3>
       <div class="hand-area" id="playerHand"></div>
-      <button class="rotate-btn" id="rotateBtn" onclick="rotateSelected()" style="margin-top:8px">↻ ROTATE PIECE</button>
-      <button class="discard-btn" id="discardBtn" onclick="discardSelected()" style="margin-top:4px">↯ DISCARD (draws new)</button>
-    </div>
-    <div class="turn-badge" id="roundBadge">
-      ROUND 1 / 10
+      <button class="action-btn" id="rotateBtn" onclick="rotateSelected()">↻ ROTATE PIECE</button>
+      <button class="action-btn danger" id="discardBtn" onclick="discardSelected()">↯ DISCARD (once per turn)</button>
     </div>
   </div>
-
+ 
   <!-- BOARD -->
   <div class="board-wrap">
     <canvas id="gameCanvas"></canvas>
-    <div class="board-msg" id="boardMsg">Select a piece from your hand, then click to place it.</div>
+    <div class="board-msg" id="boardMsg">Select a piece, then click your territory to place it.</div>
   </div>
-
-  <!-- RIGHT PANEL: Score + AI log -->
+ 
+  <!-- RIGHT: Scores + log + controls -->
   <div class="side-panel">
     <div class="panel-card">
       <h3>Territory</h3>
@@ -344,72 +280,106 @@
       </div>
       <div class="progress-bar"><div class="fill" id="progBar" style="--pct:50%"></div></div>
       <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted)">
-        Tiles left: <span id="tilesLeft">—</span>
+        Open tiles: <span id="tilesLeft">—</span>
       </div>
     </div>
-
+ 
     <div class="panel-card">
       <h3>AI Dispatch</h3>
       <div id="aiLog"><div class="entry"><span class="label">[SYS] </span>Awaiting engagement…</div></div>
     </div>
-
+ 
     <div class="panel-card">
-      <h3>Controls</h3>
-      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);line-height:2">
-        Click piece → click board<br>
-        ↻ Rotate before placing<br>
-        ↯ Discard (1 per turn)<br>
-        Pass if no valid move
+      <h3>Rules</h3>
+      <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);line-height:2">
+        Place 1 piece per turn<br>
+        Must connect to your territory<br>
+        First move touches your base<br>
+        Game ends after 15 rounds<br>
+        ×2 tiles score double points<br>
+        Most tiles wins
       </div>
-      <button class="discard-btn" id="passBtn" onclick="passTurn()" style="margin-top:10px;width:100%">⏭ PASS TURN</button>
+      <button class="action-btn" id="passBtn" onclick="passTurn()" style="margin-top:10px">⏭ PASS TURN</button>
     </div>
   </div>
 </div>
-
+ 
 <!-- Start overlay -->
 <div class="overlay active" id="startOverlay">
-  <div class="modal start-modal">
+  <div class="modal">
     <div class="logo-big">TERRANOVA</div>
-    <div class="tagline">A TERRITORY CARD GAME</div>
-    <ul>
-      <li>Pick a piece from your hand & place it on the board</li>
-      <li>Claim the most tiles to win</li>
-      <li>You cannot overlap your own tiles — but you can block the AI</li>
-      <li>Rotate pieces before placing</li>
-      <li>Game ends when no placements remain</li>
+    <div class="tagline">TERRITORY CARD GAME · 15 ROUNDS</div>
+    <ul class="rules">
+      <li>Each player has a base on opposite corners</li>
+      <li>Place 1 piece per turn — must connect to your territory</li>
+      <li>Your first piece must touch your base (blue corner)</li>
+      <li>Rotate pieces before placing · discard once per turn</li>
+      <li>Neon ×2 tiles in the centre score double points</li>
+      <li>Game ends after 15 rounds — most points wins</li>
     </ul>
-    <button class="play-again" onclick="startGame()">BEGIN ENGAGEMENT</button>
+    <button class="cta-btn" onclick="startGame()">BEGIN ENGAGEMENT</button>
   </div>
 </div>
-
+ 
 <!-- End overlay -->
 <div class="overlay" id="endOverlay">
   <div class="modal">
-    <div class="title" id="endTitle">GAME OVER</div>
-    <div class="subtitle" id="endSubtitle"></div>
+    <div class="m-title" id="endTitle">GAME OVER</div>
+    <div class="m-sub" id="endSubtitle"></div>
     <div class="result-row">
-      <div class="res-block">
+      <div>
         <div class="res-score" style="color:var(--player)" id="endScoreP">0</div>
         <div class="res-label">YOU</div>
       </div>
-      <div class="res-block">
+      <div>
         <div class="res-score" style="color:var(--ai)" id="endScoreA">0</div>
         <div class="res-label">MACHINE</div>
       </div>
     </div>
-    <button class="play-again" onclick="startGame()">PLAY AGAIN</button>
+    <button class="cta-btn" onclick="startGame()">PLAY AGAIN</button>
   </div>
 </div>
-
+ 
 <script>
-// ═══════════════════════════════════════════════
-//  TERRANOVA — Game Engine
-// ═══════════════════════════════════════════════
-
+// ═══════════════════════════════════════════════════════
+//  TERRANOVA — Complete Game Engine
+// ═══════════════════════════════════════════════════════
+ 
 const COLS = 20, ROWS = 18, CELL = 32;
-const OWNER_NONE = 0, OWNER_P = 1, OWNER_AI = 2, OWNER_BLOCKED = 3; OWNER_P_BASE = 4; OWNER_AI_BASE = 5;
-
-// Piece definitions: arrays of [row, col] offsets
+const MAX_ROUNDS = 15;
+ 
+// Cell ownership constants
+const NONE = 0, P = 1, AI = 2, BLOCKED = 3, P_BASE = 4, AI_BASE = 5;
+ 
+// Base positions (single anchor cell)
+const PLAYER_BASE = { r: ROWS - 2, c: 1 };
+const AI_BASE_POS = { r: 1,        c: COLS - 2 };
+ 
+// ── Double-point bonus tiles ─────────────────────────────
+const BONUS_TILE_COORDS = [
+  // Central cluster
+  [8,8],[8,9],[9,8],[9,9],
+  // Upper-centre band
+  [4,8],[4,9],[4,10],[5,8],[5,9],
+  // Lower-centre band
+  [12,10],[12,11],[13,10],[13,11],
+  // Left-centre corridor
+  [7,5],[8,5],[9,5],
+  // Right-centre corridor
+  [7,13],[8,13],[9,13],
+  // Far flanks (high risk, high reward)
+  [3,7],[3,8],[14,11],[14,12],
+];
+let bonusSet = new Set();
+function buildBonusSet() {
+  bonusSet.clear();
+  BONUS_TILE_COORDS.forEach(([r, c]) => {
+    if (inBounds(r, c) && board[r][c] === NONE) bonusSet.add(`${r},${c}`);
+  });
+}
+function isBonus(r, c) { return bonusSet.has(`${r},${c}`); }
+ 
+// ── Piece library ────────────────────────────────────────
 const PIECE_DEFS = [
   { name: 'MONOMINO', cells: [[0,0]] },
   { name: 'DOMINO',   cells: [[0,0],[0,1]] },
@@ -420,361 +390,452 @@ const PIECE_DEFS = [
   { name: 'TETRO-T',  cells: [[0,1],[1,0],[1,1],[1,2]] },
   { name: 'TETRO-S',  cells: [[0,1],[0,2],[1,0],[1,1]] },
   { name: 'TETRO-O',  cells: [[0,0],[0,1],[1,0],[1,1]] },
-  { name: 'TETRO-J',  cells: [[0,0],[1,0],[2,0],[2,-1]] },
+  { name: 'TETRO-J',  cells: [[0,1],[1,1],[2,0],[2,1]] },
   { name: 'PENTO-F',  cells: [[0,1],[1,0],[1,1],[1,2],[2,2]] },
   { name: 'PENTO-L',  cells: [[0,0],[1,0],[2,0],[3,0],[3,1]] },
   { name: 'PENTO-P',  cells: [[0,0],[0,1],[1,0],[1,1],[2,0]] },
   { name: 'PENTO-Y',  cells: [[0,1],[1,0],[1,1],[2,1],[3,1]] },
   { name: 'PENTO-U',  cells: [[0,0],[0,2],[1,0],[1,1],[1,2]] },
   { name: 'PENTO-X',  cells: [[0,1],[1,0],[1,1],[1,2],[2,1]] },
-  { name: 'HEXA-C',   cells: [[0,0],[0,1],[1,0],[2,0],[2,1],[1,1]] },
-  { name: 'HEXA-Z',   cells: [[0,0],[0,1],[1,1],[2,1],[2,2],[1,2]] },
+  { name: 'HEXA-C',   cells: [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]] },
+  { name: 'HEXA-Z',   cells: [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]] },
 ];
-
-// ── State
-let board, deck, playerHand, aiHand, turn, selectedIdx, hoverCell, selectedRotation, discardUsed;
-let animQueue = [];
-let roundNumber;
-const MAX_ROUNDS = 10;
-
-// ── Canvas
+ 
+// ── Game state ───────────────────────────────────────────
+let board, deck, playerHand, aiHand;
+let turn, selectedIdx, hoverCell, discardUsed, roundNumber;
+ 
+// ── Canvas setup ─────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx    = canvas.getContext('2d');
 canvas.width  = COLS * CELL;
 canvas.height = ROWS * CELL;
-
-// Starting Bases 
-function placeBases() {
-  board[ROWS - 2][1] = OWNER_P_BASE;      // Player base
-  board[1][COLS - 2] = OWNER_AI_BASE;     // AI base
-}
-  
-// ── Piece utilities
-function rotateCells(cells) {
-  // 90° CW: [r,c] → [c, -r]
+ 
+// ── Piece rotation helpers ────────────────────────────────
+function rotateCW(cells) {
   const rot = cells.map(([r,c]) => [c, -r]);
-  const minR = Math.min(...rot.map(x=>x[0]));
-  const minC = Math.min(...rot.map(x=>x[1]));
-  return rot.map(([r,c]) => [r-minR, c-minC]);
+  const minR = Math.min(...rot.map(x => x[0]));
+  const minC = Math.min(...rot.map(x => x[1]));
+  return rot.map(([r,c]) => [r - minR, c - minC]);
 }
-
-function normalizeCells(cells) {
-  const minR = Math.min(...cells.map(x=>x[0]));
-  const minC = Math.min(...cells.map(x=>x[1]));
-  return cells.map(([r,c]) => [r-minR, c-minC]);
+ 
+function applyRotation(cells, times) {
+  let c = cells.map(x => [...x]);
+  for (let i = 0; i < (times % 4); i++) c = rotateCW(c);
+  return c;
 }
-
-function applyRotation(cells, rot) {
-  let c = cells;
-  for (let i = 0; i < rot % 4; i++) c = rotateCells(c);
-  return normalizeCells(c);
-}
-
+ 
 function getPieceCells(piece) {
   return applyRotation(piece.cells, piece.rotation || 0);
 }
-
-// ── Deck
+ 
+// ── Deck & hand ──────────────────────────────────────────
 function createDeck() {
   const d = [];
-  for (let i = 0; i < 3; i++) {  // 3 copies of all pieces
+  for (let i = 0; i < 4; i++) {
     PIECE_DEFS.forEach(def => {
-      d.push({ ...def, cells: def.cells.map(c=>[...c]), id: Math.random(), rotation: 0 });
+      d.push({ name: def.name, cells: def.cells.map(c => [...c]), rotation: 0, id: Math.random() });
     });
   }
   return shuffle(d);
 }
-
+ 
 function shuffle(a) {
-  for (let i = a.length-1; i>0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
-
-function drawFromDeck() {
-  return deck.length ? deck.pop() : null;
-}
-
-function dealHand(count=5) {
+ 
+function drawCard() { return deck.length ? deck.pop() : null; }
+ 
+function dealHand(n = 5) {
   const h = [];
-  for (let i=0; i<count; i++) { const p = drawFromDeck(); if (p) h.push(p); }
+  for (let i = 0; i < n; i++) { const c = drawCard(); if (c) h.push(c); }
   return h;
 }
-
-// ── Board helpers
+ 
+// ── Board helpers ────────────────────────────────────────
 function emptyBoard() {
-  return Array.from({length:ROWS}, () => new Uint8Array(COLS));
+  return Array.from({ length: ROWS }, () => new Uint8Array(COLS));
 }
-
-function inBounds(r, c) { return r>=0 && r<ROWS && c>=0 && c<COLS; }
-
-function canPlace(cells, anchorR, anchorC, owner) {
-
-  for (const [dr,dc] of cells) {
-
-    const r = anchorR + dr;
-    const c = anchorC + dc;
-
-    if (!inBounds(r,c)) return false;
-    if (board[r][c] !== OWNER_NONE) return false;
+ 
+function inBounds(r, c) { return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
+ 
+const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
+ 
+/**
+ * Check whether placing `cells` at anchor (ar, ac) is valid for `owner`.
+ * Rules:
+ *  1. All cells must be in bounds and on NONE tiles.
+ *  2. At least one cell must be orthogonally adjacent to an already-owned
+ *     tile (own color or own base). On the FIRST placement for that owner
+ *     the check is adjacency to the BASE tile specifically.
+ */
+function canPlace(cells, ar, ac, owner) {
+  // Rule 1: bounds + empty
+  for (const [dr, dc] of cells) {
+    const r = ar + dr, c = ac + dc;
+    if (!inBounds(r, c)) return false;
+    if (board[r][c] !== NONE) return false;
   }
-
-  return hasAdjacentFriendly(
-    cells,
-    anchorR,
-    anchorC,
-    owner
-  );
+ 
+  // Rule 2: connectivity
+  const friendlyOwner = owner === P ? P : AI;
+  const friendlyBase  = owner === P ? P_BASE : AI_BASE;
+ 
+  // Does the owner already have any territory?
+  const hasTerritory = (() => {
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        if (board[r][c] === friendlyOwner) return true;
+    return false;
+  })();
+ 
+  // Adjacent-to set: own tiles + own base always count
+  const validNeighbors = new Set([friendlyOwner, friendlyBase]);
+ 
+  for (const [dr, dc] of cells) {
+    const r = ar + dr, c = ac + dc;
+    for (const [nr, nc] of DIRS.map(([a,b]) => [r+a, c+b])) {
+      if (!inBounds(nr, nc)) continue;
+      if (validNeighbors.has(board[nr][nc])) return true;
+    }
+  }
+ 
+  return false;
 }
-
-function placePiece(cells, anchorR, anchorC, owner) {
-  cells.forEach(([dr,dc]) => { board[anchorR+dr][anchorC+dc] = owner; });
+ 
+function placePiece(cells, ar, ac, owner) {
+  cells.forEach(([dr, dc]) => { board[ar + dr][ac + dc] = owner; });
 }
-
+ 
 function countOwned(owner) {
-  let n=0;
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (board[r][c]===owner) n++;
+  let n = 0;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c] === owner) n++;
   return n;
 }
-
+ 
 function countEmpty() {
-  let n=0;
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (board[r][c]===OWNER_NONE) n++;
+  let n = 0;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c] === NONE) n++;
   return n;
 }
-
-// ── Map obstacles (add interesting terrain)
+ 
+// ── Terrain ──────────────────────────────────────────────
 function addTerrain() {
-  const obstacles = [
-    // Mountain ridge
-    [3,4],[3,5],[4,5],[4,6],[5,6],[5,7],
-    // Lake
-    [8,10],[8,11],[9,10],[9,11],[9,12],[10,11],
-    // Forest patch
-    [13,2],[13,3],[14,2],[14,3],[14,4],
-    // Canyon
-    [2,14],[3,14],[4,14],[5,14],[6,14],
-    // Ruins
-    [11,7],[11,8],[12,7],
-    // Island cluster
-    [6,17],[7,17],[7,18],
+  const obs = [
+    // ── Mountain spine (diagonal, centre-left) ──
+    [2,4],[3,4],[3,5],[4,5],[4,6],[5,6],[5,7],[6,7],[6,8],
+ 
+    // ── Northern lake (top-centre, creates two narrow passes) ──
+    [1,9],[1,10],[1,11],[2,9],[2,10],[2,11],[3,10],[3,11],
+ 
+    // ── Central lake (largest obstacle, forces routing around) ──
+    [7,9],[7,10],[7,11],[8,9],[8,10],[8,11],[8,12],
+    [9,10],[9,11],[9,12],[10,10],[10,11],
+ 
+    // ── Eastern canyon (long vertical wall, one gap at r5) ──
+    [2,15],[3,15],[4,15],[6,15],[7,15],[8,15],
+ 
+    // ── Southern forest (small cluster, mirrors AI-side rocky patch) ──
+    [13,3],[14,3],[14,4],[15,4],
+ 
+    // ── Western wall spur (top-left quadrant divider) ──
+    [4,2],[5,2],[5,3],[6,3],
+ 
+    // ── Island outcrop (far right mid) ──
+    [5,17],[6,17],[7,17],[7,18],
+ 
+    // ── Bottom-right mesa ──
+    [13,14],[13,15],[14,14],[14,15],[15,14],[15,15],
+ 
+    // ── Horizontal chokepoint (mid-board, forces tight passage) ──
+    [9,4],[9,5],[9,6],[10,4],
+ 
+    // ── Top-right rocky patch (safe distance from AI base) ──
+    [3,16],[3,17],[4,17],[4,18],
+ 
+    // ── Bottom-centre divider ──
+    [15,9],[15,10],[15,11],[16,9],[16,10],
+ 
+    // ── Ruins (centre, zigzag corridor) ──
+    [10,7],[11,7],[11,8],[12,7],[12,8],[12,9],
+ 
+    // ── Upper-right notch ──
+    [0,13],[0,14],[1,13],
+ 
+    // ── Scattered boulders (single cells for texture) ──
+    [4,12],[6,2],[10,14],[10,17],[12,17],[16,6],[16,15],[2,7],[6,12],[11,4],
   ];
-  obstacles.forEach(([r,c]) => {
-    if (inBounds(r,c)) board[r][c] = OWNER_BLOCKED;
+ 
+  // Safety: never place within 1 cell of either base
+  const tooClose = ([r, c]) =>
+    [PLAYER_BASE, AI_BASE_POS].some(b => Math.abs(r - b.r) <= 1 && Math.abs(c - b.c) <= 1);
+ 
+  obs.filter(t => !tooClose(t)).forEach(([r, c]) => {
+    if (inBounds(r, c)) board[r][c] = BLOCKED;
   });
 }
-
-// ── RENDERING ──────────────────────────────────
-
-const COLOR_MAP = {
-  [OWNER_NONE]:    '#1c2128',
-  [OWNER_P]:       '#1a3a5c',
-  [OWNER_AI]:      '#3d1a1a',
-  [OWNER_BLOCKED]: '#2d3139',
+ 
+function placeBases() {
+  board[PLAYER_BASE.r][PLAYER_BASE.c] = P_BASE;
+  board[AI_BASE_POS.r][AI_BASE_POS.c] = AI_BASE;
+  buildBonusSet(); // build after terrain so blocked tiles are excluded
+}
+ 
+// ── Rendering ────────────────────────────────────────────
+const FILL = {
+  [NONE]:    '#1c2128',
+  [P]:       '#1a3a5c',
+  [AI]:      '#3d1a1a',
+  [BLOCKED]: '#2a2f3a',
+  [P_BASE]:  '#0d2a4a',
+  [AI_BASE]: '#3a0d0d',
 };
-const BORDER_MAP = {
-  [OWNER_NONE]:    '#262d38',
-  [OWNER_P]:       '#3b8eff',
-  [OWNER_AI]:      '#e05252',
-  [OWNER_BLOCKED]: '#383e48',
+const STROKE = {
+  [NONE]:    '#262d38',
+  [P]:       '#3b8eff',
+  [AI]:      '#e05252',
+  [BLOCKED]: '#383e48',
+  [P_BASE]:  '#5ab0ff',
+  [AI_BASE]: '#ff8080',
 };
-
-// Base Colors 
-COLOR_MAP[OWNER_P_BASE] = '#4fb6ff';
-COLOR_MAP[OWNER_AI_BASE] = '#ff7070';
-
-BORDER_MAP[OWNER_P_BASE] = '#9ad7ff';
-BORDER_MAP[OWNER_AI_BASE] = '#ffb0b0';
-  
+ 
 function drawBoard() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Cells
-  for (let r=0;r<ROWS;r++) {
-    for (let c=0;c<COLS;c++) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+ 
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
       const v = board[r][c];
-      const x=c*CELL, y=r*CELL;
-      ctx.fillStyle = COLOR_MAP[v];
-      ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
-      ctx.strokeStyle = BORDER_MAP[v];
-      ctx.lineWidth = v===OWNER_NONE ? 0.5 : 1;
-      ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
-
-      // Blocked terrain texture
-      if (v === OWNER_BLOCKED) {
-        ctx.fillStyle = '#3a4050';
-        ctx.font = `${CELL*0.45}px serif`;
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText('▲', x+CELL/2, y+CELL/2+1);
+      const x = c * CELL, y = r * CELL;
+      const bonus = isBonus(r, c);
+ 
+      // Cell background
+      if (bonus && v === NONE) {
+        // Unclaimed bonus tile — dark gold background
+        ctx.fillStyle = '#1a1600';
+      } else {
+        ctx.fillStyle = FILL[v] || '#1c2128';
+      }
+      ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+ 
+      // Border
+      if (bonus && v === NONE) {
+        // Neon yellow glow border
+        ctx.strokeStyle = '#e8ff00';
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = '#e8ff00';
+        ctx.shadowBlur = 6;
+      } else {
+        ctx.strokeStyle = STROKE[v] || '#262d38';
+        ctx.lineWidth = (v === NONE) ? 0.5 : 1;
+        ctx.shadowBlur = 0;
+      }
+      ctx.strokeRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1);
+      ctx.shadowBlur = 0;
+ 
+      // Claimed bonus tile — overlay a subtle gold shimmer
+      if (bonus && (v === P || v === AI)) {
+        ctx.fillStyle = v === P ? 'rgba(232,255,0,0.18)' : 'rgba(232,255,0,0.14)';
+        ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+        // Thin neon outline still visible
+        ctx.strokeStyle = 'rgba(232,255,0,0.55)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 1.5, y + 1.5, CELL - 3, CELL - 3);
+      }
+ 
+      // Terrain glyph
+      if (v === BLOCKED) {
+        ctx.fillStyle = '#4a5060';
+        ctx.font = `${CELL * 0.42}px serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('▲', x + CELL / 2, y + CELL / 2 + 1);
+      }
+ 
+      // Bonus ×2 label on unclaimed tiles
+      if (bonus && v === NONE) {
+        ctx.fillStyle = '#e8ff00';
+        ctx.font = `bold 8px Share Tech Mono`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#e8ff00';
+        ctx.shadowBlur = 4;
+        ctx.fillText('×2', x + CELL / 2, y + CELL / 2);
+        ctx.shadowBlur = 0;
+      }
+ 
+      // Base markers
+      if (v === P_BASE || v === AI_BASE) {
+        const col = v === P_BASE ? '#5ab0ff' : '#ff8080';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x + CELL/2, y + CELL/2, CELL * 0.36, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(x + CELL/2, y + CELL/2, CELL * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = col;
+        ctx.font = `bold 7px Share Tech Mono`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(v === P_BASE ? 'YOU' : 'AI', x + CELL/2, y + CELL/2 + CELL * 0.42);
       }
     }
   }
-
-  // Ghost preview
+ 
+  // Ghost preview on hover
   if (turn === 'player' && selectedIdx !== null && hoverCell) {
     const piece = playerHand[selectedIdx];
     if (piece) {
       const cells = getPieceCells(piece);
-      const [hr,hc] = hoverCell;
-      const valid = canPlace(cells, hr, hc, OWNER_P);
-      cells.forEach(([dr,dc]) => {
-        const r2=hr+dr, c2=hc+dc;
-        if (!inBounds(r2,c2)) return;
-        ctx.fillStyle = valid ? 'rgba(59,142,255,0.35)' : 'rgba(224,82,82,0.25)';
-        ctx.fillRect(c2*CELL+1,r2*CELL+1,CELL-2,CELL-2);
-        ctx.strokeStyle = valid ? '#3b8eff' : '#e05252';
-        ctx.lineWidth=1.5;
-        ctx.strokeRect(c2*CELL+0.5,r2*CELL+0.5,CELL-1,CELL-1);
+      const [hr, hc] = hoverCell;
+      const valid = canPlace(cells, hr, hc, P);
+      cells.forEach(([dr, dc]) => {
+        const r2 = hr + dr, c2 = hc + dc;
+        if (!inBounds(r2, c2)) return;
+        const onBonus = isBonus(r2, c2);
+        if (onBonus && valid) {
+          ctx.fillStyle = 'rgba(232,255,0,0.28)';
+          ctx.shadowColor = '#e8ff00'; ctx.shadowBlur = 8;
+        } else {
+          ctx.fillStyle = valid ? 'rgba(59,142,255,0.38)' : 'rgba(224,82,82,0.28)';
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillRect(c2 * CELL + 1, r2 * CELL + 1, CELL - 2, CELL - 2);
+        ctx.strokeStyle = onBonus && valid ? '#e8ff00' : (valid ? '#3b8eff' : '#e05252');
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(c2 * CELL + 0.5, r2 * CELL + 0.5, CELL - 1, CELL - 1);
+        ctx.shadowBlur = 0;
       });
     }
   }
-
-  // Coordinates fade (subtle)
-  ctx.fillStyle='rgba(139,148,158,0.12)';
-  ctx.font='8px Share Tech Mono';
-  ctx.textAlign='center'; ctx.textBaseline='top';
-  for (let r=0;r<ROWS;r+=4) for (let c=0;c<COLS;c+=4) {
-    ctx.fillText(`${c},${r}`, c*CELL+CELL/2, r*CELL+2);
-  }
-
-  // Bases 
-  if (v === OWNER_P_BASE) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(
-      x + CELL/2,
-      y + CELL/2,
-      CELL*0.22,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-  }  
-  if (v === OWNER_AI_BASE) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(
-      x + CELL/2,
-      y + CELL/2,
-      CELL*0.22,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-  }
+ 
+  // Subtle coordinate hints
+  ctx.fillStyle = 'rgba(139,148,158,0.08)';
+  ctx.font = '7px Share Tech Mono';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let r = 0; r < ROWS; r += 4)
+    for (let c = 0; c < COLS; c += 4)
+      ctx.fillText(`${c},${r}`, c * CELL + CELL / 2, r * CELL + 2);
 }
-
-// ── PIECE PREVIEW CARDS ──────────────────────────
-
+ 
+// ── Hand UI ──────────────────────────────────────────────
 function renderHandCards() {
   const el = document.getElementById('playerHand');
   el.innerHTML = '';
   playerHand.forEach((piece, idx) => {
     const btn = document.createElement('div');
-    btn.className = 'card-btn' + (idx===selectedIdx?' selected':'');
+    btn.className = 'card-btn' + (idx === selectedIdx ? ' selected' : '');
     btn.onclick = () => selectPiece(idx);
-
-    const cv = document.createElement('canvas');
+ 
     const cells = getPieceCells(piece);
-    const maxR = Math.max(...cells.map(x=>x[0]))+1;
-    const maxC = Math.max(...cells.map(x=>x[1]))+1;
-    const S=12;
-    cv.width = Math.max(maxC,1)*S;
-    cv.height = Math.max(maxR,1)*S;
-    cv.style.width  = cv.width+'px';
-    cv.style.height = cv.height+'px';
-    const c2 = cv.getContext('2d');
-    cells.forEach(([r,col]) => {
-      c2.fillStyle='#3b8eff';
-      c2.fillRect(col*S+1,r*S+1,S-2,S-2);
-      c2.strokeStyle='#6eb0ff';
-      c2.lineWidth=0.5;
-      c2.strokeRect(col*S+0.5,r*S+0.5,S-1,S-1);
+    const maxR = Math.max(...cells.map(x => x[0])) + 1;
+    const maxC = Math.max(...cells.map(x => x[1])) + 1;
+    const S = 12;
+    const cv = document.createElement('canvas');
+    cv.width  = Math.max(maxC, 1) * S;
+    cv.height = Math.max(maxR, 1) * S;
+    cv.style.width  = cv.width  + 'px';
+    cv.style.height = cv.height + 'px';
+    const cx = cv.getContext('2d');
+    cells.forEach(([r, c]) => {
+      cx.fillStyle = '#3b8eff';
+      cx.fillRect(c * S + 1, r * S + 1, S - 2, S - 2);
+      cx.strokeStyle = '#6eb0ff';
+      cx.lineWidth = 0.5;
+      cx.strokeRect(c * S + 0.5, r * S + 0.5, S - 1, S - 1);
     });
-
-    const nm = document.createElement('div'); nm.className='card-name'; nm.textContent=piece.name;
-    const sz = document.createElement('div'); sz.className='card-size'; sz.textContent=`${cells.length} tile${cells.length>1?'s':''}`;
-    btn.appendChild(cv);
-    btn.appendChild(nm);
-    btn.appendChild(sz);
+ 
+    const nm = document.createElement('div');
+    nm.className = 'card-name'; nm.textContent = piece.name;
+    const sz = document.createElement('div');
+    sz.className = 'card-size'; sz.textContent = `${cells.length} tile${cells.length > 1 ? 's' : ''}`;
+ 
+    btn.appendChild(cv); btn.appendChild(nm); btn.appendChild(sz);
     el.appendChild(btn);
   });
 }
-
-// ── GAME ACTIONS ─────────────────────────────────
-
+ 
+// ── Player actions ───────────────────────────────────────
 function selectPiece(idx) {
   if (turn !== 'player') return;
   selectedIdx = (selectedIdx === idx) ? null : idx;
   renderHandCards();
   setMsg(selectedIdx !== null
-    ? `[${playerHand[selectedIdx].name}] selected — click board to place.`
+    ? `[${playerHand[selectedIdx].name}] selected — click your territory to place.`
     : 'Select a piece from your hand.', 'info');
 }
-
+ 
 function rotateSelected() {
   if (selectedIdx === null || turn !== 'player') return;
-  playerHand[selectedIdx].rotation = ((playerHand[selectedIdx].rotation||0)+1)%4;
+  playerHand[selectedIdx].rotation = ((playerHand[selectedIdx].rotation || 0) + 1) % 4;
   renderHandCards();
-  setMsg(`Piece rotated.`, 'ok');
   drawBoard();
+  setMsg('Piece rotated.', 'ok');
 }
-
+ 
 function discardSelected() {
   if (selectedIdx === null || turn !== 'player' || discardUsed) return;
-  const removed = playerHand.splice(selectedIdx, 1)[0];
-  const newCard = drawFromDeck();
-  if (newCard) playerHand.splice(selectedIdx, 0, newCard);
+  playerHand.splice(selectedIdx, 1);
+  const fresh = drawCard();
+  if (fresh) playerHand.splice(selectedIdx, 0, fresh);
   selectedIdx = null;
   discardUsed = true;
   document.getElementById('discardBtn').disabled = true;
   renderHandCards();
   drawBoard();
-  setMsg('Piece discarded. Drew a new card.', 'ok');
   updateHUD();
+  setMsg('Piece discarded — drew a new card.', 'ok');
 }
-
+ 
 function passTurn() {
   if (turn !== 'player') return;
-  logAI(`[PLAYER] Passed turn.`);
+  logAI('[PLAYER] Passed turn.');
   endPlayerTurn();
 }
-
+ 
+// ── Mouse events ─────────────────────────────────────────
 canvas.addEventListener('mousemove', e => {
-  if (turn !== 'player' || selectedIdx === null) { hoverCell=null; drawBoard(); return; }
+  if (turn !== 'player' || selectedIdx === null) { hoverCell = null; drawBoard(); return; }
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  hoverCell = [Math.floor(y/CELL), Math.floor(x/CELL)];
+  hoverCell = [Math.floor((e.clientY - rect.top) / CELL), Math.floor((e.clientX - rect.left) / CELL)];
   drawBoard();
 });
-
-canvas.addEventListener('mouseleave', () => { hoverCell=null; drawBoard(); });
-
+ 
+canvas.addEventListener('mouseleave', () => { hoverCell = null; drawBoard(); });
+ 
 canvas.addEventListener('click', e => {
   if (turn !== 'player' || selectedIdx === null) return;
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  const anchorR = Math.floor(y/CELL), anchorC = Math.floor(x/CELL);
+  const ar = Math.floor((e.clientY - rect.top)  / CELL);
+  const ac = Math.floor((e.clientX - rect.left) / CELL);
   const piece = playerHand[selectedIdx];
   const cells = getPieceCells(piece);
-  if (!canPlace(cells, anchorR, anchorC, OWNER_P)) {
-    setMsg('Invalid placement — overlapping or out of bounds.', 'err');
+ 
+  if (!canPlace(cells, ar, ac, P)) {
+    setMsg('Invalid — must connect to your territory (blue tiles / base).', 'err');
     shakeCanvas();
     return;
   }
-  placePiece(cells, anchorR, anchorC, OWNER_P);
-  playerHand.splice(selectedIdx,1);
-  const newCard = drawFromDeck();
-  if (newCard) playerHand.push(newCard);
+ 
+  placePiece(cells, ar, ac, P);
+  playerHand.splice(selectedIdx, 1);
+  const fresh = drawCard();
+  if (fresh) playerHand.push(fresh);
   selectedIdx = null;
+ 
   drawBoard();
   updateHUD();
-  setMsg('Piece placed! AI is thinking…', 'ok');
+  setMsg('Placed! AI is thinking…', 'ok');
   endPlayerTurn();
 });
-
+ 
 function endPlayerTurn() {
   turn = 'ai';
   selectedIdx = null;
@@ -784,261 +845,343 @@ function endPlayerTurn() {
   document.getElementById('turnBadge').className = 'turn-badge ai-turn';
   renderHandCards();
   drawBoard();
-  setTimeout(aiTurn, 700);
+  setTimeout(aiTurn, 800);
 }
-
-// ── SCORE & HUD ──────────────────────────────────
-
+ 
+// ── HUD ──────────────────────────────────────────────────
+// Score = regular tiles + 2× bonus tiles (base tile counts as 1)
+function calcScore(owner) {
+  let score = 0;
+  const baseOwner = owner === P ? P_BASE : AI_BASE;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const v = board[r][c];
+      if (v === baseOwner) { score += 1; continue; }
+      if (v !== owner) continue;
+      score += isBonus(r, c) ? 2 : 1;
+    }
+  }
+  return score;
+}
+ 
 function updateHUD() {
-  const sp = countOwned(OWNER_P), sa = countOwned(OWNER_AI);
-  const total = sp + sa + 1;
-  const pct = (sp/(total))*100;
+  const sp = calcScore(P), sa = calcScore(AI);
+  const total = sp + sa || 1;
+  const pct = (sp / total) * 100;
   document.getElementById('scoreP').textContent = sp;
   document.getElementById('scoreA').textContent = sa;
-  document.getElementById('progBar').style.setProperty('--pct', pct+'%');
+  document.getElementById('progBar').style.setProperty('--pct', pct + '%');
   document.getElementById('tilesLeft').textContent = countEmpty();
-  document.getElementById("roundBadge").textContent =
-  `ROUND ${roundNumber} / ${MAX_ROUNDS}`;
+  document.getElementById('roundBadge').textContent = `ROUND ${roundNumber} / ${MAX_ROUNDS}`;
 }
-
-function setMsg(text, type='') {
+ 
+function setMsg(text, type = '') {
   const el = document.getElementById('boardMsg');
   el.textContent = text;
-  el.className = 'board-msg '+(type||'');
+  el.className = 'board-msg ' + type;
 }
-
+ 
 function logAI(text) {
   const log = document.getElementById('aiLog');
   const entry = document.createElement('div');
-  entry.className='entry';
-  entry.innerHTML=text.replace('[PLAYER]','<span class="label">[PLAYER]</span>')
-                      .replace('[AI]','<span class="label">[AI]</span>')
-                      .replace('[SYS]','<span class="label">[SYS]</span>');
+  entry.className = 'entry';
+  entry.innerHTML = text
+    .replace('[PLAYER]', '<span class="label">[PLAYER]</span>')
+    .replace('[AI]',     '<span class="label">[AI]</span>')
+    .replace('[SYS]',    '<span class="label">[SYS]</span>');
   log.insertBefore(entry, log.firstChild);
   while (log.children.length > 8) log.removeChild(log.lastChild);
 }
-
+ 
 function shakeCanvas() {
-  canvas.style.transition='transform 0.05s';
-  const frames = [[4,0],[-4,0],[3,0],[-2,0],[0,0]];
-  frames.forEach(([x],i) => {
-    setTimeout(()=>{ canvas.style.transform=`translateX(${frames[i][0]}px)`; },i*50);
+  const offsets = [5, -5, 4, -3, 0];
+  offsets.forEach((x, i) => {
+    setTimeout(() => { canvas.style.transform = `translateX(${x}px)`; }, i * 50);
   });
-  setTimeout(()=>{ canvas.style.transform=''; },300);
+  setTimeout(() => { canvas.style.transform = ''; }, 300);
 }
-
-// ── AI SYSTEM ────────────────────────────────────
-// Strategy: score each possible placement by how many tiles it claims
-// AND how well it blocks the player's future moves (threat reduction)
-
-function scoreAIPlacement(cells, anchorR, anchorC) {
-  const placed = cells.map(([dr,dc])=>[anchorR+dr,anchorC+dc]);
-  let score = placed.length * 2; // base: cell count
-
-  // Bonus: adjacency to already-owned AI cells (cohesion)
-  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-  placed.forEach(([r,c]) => {
-    dirs.forEach(([dr,dc]) => {
-      const nr=r+dr, nc=c+dc;
-      if (inBounds(nr,nc)) {
-        if (board[nr][nc]===OWNER_AI) score += 1.5;
-        // Blocking player — high value
-        if (board[nr][nc]===OWNER_P) score += 2.5;
-        // Prefer center
-        const dCenter = Math.abs(nr-ROWS/2)+Math.abs(nc-COLS/2);
-        score += (1 - dCenter/(ROWS+COLS)) * 0.8;
+ 
+// ── AI System ────────────────────────────────────────────
+// ── AI scoring helpers ────────────────────────────────────
+ 
+// Count how many NONE tiles are orthogonally reachable from a set of placed cells
+// (immediate frontier — how much new space this placement opens up)
+function countFrontier(placedCells) {
+  const seen = new Set();
+  let frontier = 0;
+  placedCells.forEach(([r, c]) => {
+    DIRS.forEach(([dr, dc]) => {
+      const nr = r + dr, nc = c + dc;
+      const key = nr * 100 + nc;
+      if (!seen.has(key) && inBounds(nr, nc) && board[nr][nc] === NONE) {
+        seen.add(key);
+        frontier++;
       }
     });
   });
-
-  // Penalty for edge clustering (prefer open territory)
-  placed.forEach(([r,c]) => {
-    if (r===0||r===ROWS-1||c===0||c===COLS-1) score -= 0.5;
+  return frontier;
+}
+ 
+// Count how many NONE tiles border the player's territory (player's frontier)
+// Used to estimate how much space the player can still expand into
+function playerFrontierSize() {
+  const seen = new Set();
+  let n = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c] !== P && board[r][c] !== P_BASE) continue;
+      DIRS.forEach(([dr, dc]) => {
+        const nr = r + dr, nc = c + dc;
+        const key = nr * 100 + nc;
+        if (!seen.has(key) && inBounds(nr, nc) && board[nr][nc] === NONE) {
+          seen.add(key); n++;
+        }
+      });
+    }
+  }
+  return n;
+}
+ 
+// Does placing these cells wall off / reduce the player's frontier?
+// Returns how many player-frontier NONE tiles become blocked by adjacency to the new piece
+function countChokeValue(placedCells) {
+  // Tiles adjacent to the placed piece
+  const adjacentNone = new Set();
+  placedCells.forEach(([r, c]) => {
+    DIRS.forEach(([dr, dc]) => {
+      const nr = r + dr, nc = c + dc;
+      if (inBounds(nr, nc) && board[nr][nc] === NONE) adjacentNone.add(nr * 100 + nc);
+    });
   });
-
+ 
+  // Of those, how many were also adjacent to the player's territory?
+  let choke = 0;
+  adjacentNone.forEach(key => {
+    const nr = Math.floor(key / 100), nc = key % 100;
+    for (const [dr, dc] of DIRS) {
+      const pr = nr + dr, pc = nc + dc;
+      if (inBounds(pr, pc) && (board[pr][pc] === P || board[pr][pc] === P_BASE)) { choke++; break; }
+    }
+  });
+  return choke;
+}
+ 
+function scoreAIPlacement(cells, ar, ac) {
+  const placed = cells.map(([dr, dc]) => [ar + dr, ac + dc]);
+  const tileCount = placed.length;
+  const roundProgress = roundNumber / MAX_ROUNDS; // 0→1 across the game
+ 
+  // ── 1. Raw tile count (always valuable) ──
+  let score = tileCount * 3.0;
+ 
+  // ── 2. Adjacency bonuses ──
+  placed.forEach(([r, c]) => {
+    DIRS.forEach(([dr, dc]) => {
+      const nr = r + dr, nc = c + dc;
+      if (!inBounds(nr, nc)) return;
+      const v = board[nr][nc];
+      // Cohesion: stay connected, don't fragment
+      if (v === AI || v === AI_BASE) score += 1.2;
+      // Blocking: scale UP as game progresses (early = expand, late = deny)
+      if (v === P || v === P_BASE) score += 2.5 + roundProgress * 4.0;
+    });
+    // Edge penalty — corners are dead ends
+    if (r === 0 || r === ROWS - 1 || c === 0 || c === COLS - 1) score -= 1.0;
+  });
+ 
+  // ── 3. Expansion potential — how many new frontier tiles does this open? ──
+  // Simulate placing the piece temporarily to measure future access
+  placed.forEach(([r, c]) => { board[r][c] = AI; }); // temp place
+  const frontier = countFrontier(placed);
+  placed.forEach(([r, c]) => { board[r][c] = NONE; }); // undo
+  // Early game: expansion is critical. Late game: less so.
+  score += frontier * (1.8 - roundProgress * 1.2);
+ 
+  // ── 4. Chokepoint value — does this cut into the player's frontier? ──
+  const choke = countChokeValue(placed);
+  // Choking matters more as game goes on
+  score += choke * (1.0 + roundProgress * 3.5);
+ 
+  // ── 5. Larger pieces are inherently better (tile efficiency) ──
+  score += tileCount * 0.5;
+ 
+  // ── 6. Bonus tile value — landing on ×2 tiles is worth extra ──
+  placed.forEach(([r, c]) => {
+    if (isBonus(r, c)) score += 4.0 + roundProgress * 2.0;
+  });
+ 
   return score;
 }
-
+ 
+// Returns the best {r,c,cells,score} placement for a given piece, or null
 function findBestAIMove(piece) {
-  const cells_base = getPieceCells(piece);
   let best = null, bestScore = -Infinity;
-  for (let rot=0; rot<4; rot++) {
-    const cells = applyRotation(piece.cells, (piece.rotation||0)+rot);
-    for (let r=0; r<ROWS; r++) {
-      for (let c=0; c<COLS; c++) {
-        if (!canPlace(cells,r,c,OWNER_AI)) continue;
-        const s = scoreAIPlacement(cells,r,c);
-        if (s > bestScore) { bestScore=s; best={r,c,cells,rot,score:s}; }
+  for (let rot = 0; rot < 4; rot++) {
+    const cells = applyRotation(piece.cells, (piece.rotation || 0) + rot);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (!canPlace(cells, r, c, AI)) continue;
+        const s = scoreAIPlacement(cells, r, c);
+        if (s > bestScore) { bestScore = s; best = { r, c, cells, score: s }; }
       }
     }
   }
   return best;
 }
-
+ 
 function aiTurn() {
   if (turn !== 'ai') return;
-
-  // Try each piece, pick the move with highest score
-  let overallBest = null, bestPieceIdx = -1;
-  aiHand.forEach((piece, idx) => {
-    const move = findBestAIMove(piece);
-    if (move && (!overallBest || move.score > overallBest.score)) {
-      overallBest = move;
-      bestPieceIdx = idx;
+ 
+  const roundProgress = roundNumber / MAX_ROUNDS;
+ 
+  // Evaluate every piece in hand — find best move per piece
+  let candidates = aiHand.map((piece, idx) => ({
+    idx, piece, move: findBestAIMove(piece),
+  })).filter(c => c.move !== null);
+  candidates.sort((a, b) => b.move.score - a.move.score);
+ 
+  // ── Smart discard logic ─────────────────────────────────────────
+  // Discard threshold rises early game (be picky) and drops late game
+  // (any move is better than none on a tight board).
+  const DISCARD_THRESHOLD = 6.0 - roundProgress * 3.5;
+ 
+  const unplaceableIdx = aiHand.findIndex(piece => findBestAIMove(piece) === null);
+  let discardIdx = unplaceableIdx;
+ 
+  if (discardIdx === -1 && deck.length > 3 && candidates.length > 1) {
+    const worst = candidates[candidates.length - 1];
+    // Only discard if weak AND the piece is small (Monomino/Domino not worth discarding late)
+    const worstSize = getPieceCells(worst.piece).length;
+    if (worst.move.score < DISCARD_THRESHOLD && worstSize <= 3) {
+      discardIdx = worst.idx;
     }
-  });
-
-  if (!overallBest) {
-    // No valid move — try discarding a piece for a fresh one
-    const largestIdx = aiHand.reduce((bi,p,i) => getPieceCells(p).length > getPieceCells(aiHand[bi]).length ? i : bi, 0);
-    const discarded = aiHand.splice(largestIdx,1)[0];
-    const fresh = drawFromDeck();
-    if (fresh) {
-      aiHand.push(fresh);
-      logAI(`[AI] No valid move. Discarded ${discarded.name}, drew ${fresh.name}.`);
-    } else {
-      logAI(`[AI] No valid moves and deck empty. Passing.`);
-    }
-  } else {
-    placePiece(overallBest.cells, overallBest.r, overallBest.c, OWNER_AI);
-    aiHand.splice(bestPieceIdx,1);
-    const fresh = drawFromDeck();
-    if (fresh) aiHand.push(fresh);
-    logAI(`[AI] Played ${aiHand[0]?.name||'piece'} → (${overallBest.c},${overallBest.r}) · score ${overallBest.score.toFixed(1)}`);
   }
-
+ 
+  if (discardIdx !== -1 && deck.length > 0) {
+    // ── Discard path ──
+    const discardedPiece = aiHand[discardIdx];
+    const oldWorstScore = candidates.find(c => c.idx === discardIdx)?.move?.score ?? 0;
+    aiHand.splice(discardIdx, 1);
+    const fresh = drawCard();
+    aiHand.push(fresh);
+ 
+    const freshMove = findBestAIMove(fresh);
+    const newScore  = freshMove ? freshMove.score : 0;
+ 
+    // Re-evaluate the full hand after drawing
+    candidates = aiHand.map((piece, idx) => ({
+      idx, piece, move: findBestAIMove(piece),
+    })).filter(c => c.move !== null).sort((a, b) => b.move.score - a.move.score);
+ 
+    if (newScore > oldWorstScore || unplaceableIdx !== -1) {
+      logAI(`[AI] Discarded ${discardedPiece.name} · drew ${fresh.name} (↑${newScore.toFixed(1)})`);
+    } else {
+      logAI(`[AI] Swapped ${discardedPiece.name} → ${fresh.name} (hand refresh)`);
+    }
+ 
+    if (candidates.length > 0) {
+      const chosen = candidates[0];
+      placePiece(chosen.move.cells, chosen.move.r, chosen.move.c, AI);
+      aiHand.splice(chosen.idx, 1);
+      const next = drawCard(); if (next) aiHand.push(next);
+      logAI(`[AI] Played ${chosen.piece.name} → (${chosen.move.c},${chosen.move.r}) · ${chosen.move.score.toFixed(1)}`);
+    } else {
+      logAI(`[AI] Drew ${fresh.name} — no valid move yet.`);
+    }
+ 
+  } else if (candidates.length > 0) {
+    // ── Normal best-move play ──
+    const chosen = candidates[0];
+    placePiece(chosen.move.cells, chosen.move.r, chosen.move.c, AI);
+    aiHand.splice(chosen.idx, 1);
+    const fresh = drawCard(); if (fresh) aiHand.push(fresh);
+    logAI(`[AI] Played ${chosen.piece.name} → (${chosen.move.c},${chosen.move.r}) · ${chosen.move.score.toFixed(1)}`);
+ 
+  } else {
+    // ── Truly stuck ──
+    const largestIdx = aiHand.reduce((bi, p, i) =>
+      getPieceCells(p).length > getPieceCells(aiHand[bi]).length ? i : bi, 0);
+    const discarded = aiHand.splice(largestIdx, 1)[0];
+    const fresh = drawCard();
+    if (fresh) { aiHand.push(fresh); logAI(`[AI] Stuck. Discarded ${discarded.name}, drew ${fresh.name}.`); }
+    else        { logAI(`[AI] No moves, deck empty. Passing.`); }
+  }
+ 
   drawBoard();
   updateHUD();
-
-  // Check end condition
-  if (checkGameOver()) return;
+ 
+  // ── Round tracking ──
+  // Both players have now taken their turn — increment round
   roundNumber++;
-
+  updateHUD();
+ 
   if (roundNumber > MAX_ROUNDS) {
     endGame();
     return;
   }
+ 
   turn = 'player';
   document.getElementById('turnBadge').textContent = 'YOUR TURN';
   document.getElementById('turnBadge').className = 'turn-badge player-turn';
   renderHandCards();
-  setMsg('Your turn — select a piece and place it.', '');
+  setMsg(`Round ${roundNumber} — select a piece and place it.`, '');
 }
-
-// ── END GAME ─────────────────────────────────────
-
-function checkGameOver() {
-  // End if: board is mostly full OR both hands can't place anything
-  const empty = countEmpty();
-  if (empty < 4) { endGame(); return true; }
-
-  const playerCanPlace = playerHand.some(piece => {
-    for (let rot=0;rot<4;rot++) {
-      const cells=applyRotation(piece.cells,(piece.rotation||0)+rot);
-      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        if (canPlace(cells,r,c,OWNER_P)) return true;
-      }
-    }
-    return false;
-  });
-
-  const aiCanPlace = aiHand.some(piece => {
-    for (let rot=0;rot<4;rot++) {
-      const cells=applyRotation(piece.cells,(piece.rotation||0)+rot);
-      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        if (canPlace(cells,r,c,OWNER_AI)) return true;
-      }
-    }
-    return false;
-  });
-
-  if (!playerCanPlace && !aiCanPlace && deck.length === 0) {
-    endGame(); return true;
-  }
-  return false;
-}
-
+ 
+// ── End game ─────────────────────────────────────────────
 function endGame() {
-  const sp = countOwned(OWNER_P), sa = countOwned(OWNER_AI);
+  const sp = calcScore(P), sa = calcScore(AI);
+  const win = sp > sa;
+ 
   document.getElementById('endScoreP').textContent = sp;
   document.getElementById('endScoreA').textContent = sa;
-  const win = sp > sa;
-  document.getElementById('endTitle').textContent = win ? 'VICTORY' : sp===sa ? 'STALEMATE' : 'DEFEATED';
-  document.getElementById('endTitle').style.color = win ? 'var(--player)' : sp===sa ? 'var(--accent)' : 'var(--ai)';
+  document.getElementById('endTitle').textContent =
+    win ? 'VICTORY' : sp === sa ? 'STALEMATE' : 'DEFEATED';
+  document.getElementById('endTitle').style.color =
+    win ? 'var(--player)' : sp === sa ? 'var(--accent)' : 'var(--ai)';
   document.getElementById('endSubtitle').textContent = win
-    ? `You claimed ${sp} tiles vs Machine's ${sa}. Territory secured.`
-    : sp===sa
-    ? `Dead even at ${sp} tiles each.`
-    : `Machine dominated with ${sa} tiles vs your ${sp}.`;
+    ? `You scored ${sp} pts vs Machine's ${sa}. Territory secured after ${MAX_ROUNDS} rounds.`
+    : sp === sa
+    ? `Dead even at ${sp} pts each after ${MAX_ROUNDS} rounds.`
+    : `Machine dominated — ${sa} pts vs your ${sp} after ${MAX_ROUNDS} rounds.`;
+ 
   document.getElementById('endOverlay').classList.add('active');
   turn = 'over';
 }
-
-// ── INIT ─────────────────────────────────────────
-
+ 
+// ── Init ─────────────────────────────────────────────────
 function startGame() {
   document.getElementById('startOverlay').classList.remove('active');
   document.getElementById('endOverlay').classList.remove('active');
-  board = emptyBoard();
+ 
+  board       = emptyBoard();
   addTerrain();
   placeBases();
-  roundNumber = 1;
-  deck = createDeck();
-  playerHand = dealHand(5);
-  aiHand = dealHand(5);
+ 
+  deck        = createDeck();
+  playerHand  = dealHand(5);
+  aiHand      = dealHand(5);
+ 
+  turn        = 'player';
   selectedIdx = null;
-  hoverCell = null;
+  hoverCell   = null;
   discardUsed = false;
-  turn = 'player';
+  roundNumber = 1;
+ 
   document.getElementById('discardBtn').disabled = false;
-  document.getElementById('turnBadge').textContent = 'YOUR TURN';
-  document.getElementById('turnBadge').className = 'turn-badge player-turn';
-  document.getElementById('aiLog').innerHTML = '<div class="entry"><span class="label">[SYS] </span>Engagement begun. Analyze and dominate.</div>';
+  document.getElementById('turnBadge').textContent  = 'YOUR TURN';
+  document.getElementById('turnBadge').className    = 'turn-badge player-turn';
+  document.getElementById('aiLog').innerHTML =
+    '<div class="entry"><span class="label">[SYS] </span>Engagement begun. Dominate the territory.</div>';
+ 
   renderHandCards();
   drawBoard();
   updateHUD();
-  setMsg('Your turn — select a piece from your hand.', '');
+  setMsg('Round 1 — select a piece. Your first piece must touch your blue base.', 'info');
 }
-
-// Territory Connectivity Check 
-
-function hasAdjacentFriendly(cells, anchorR, anchorC, owner) {
-
-  const validOwners =
-    owner === OWNER_P
-      ? [OWNER_P, OWNER_P_BASE]
-      : [OWNER_AI, OWNER_AI_BASE];
-
-  const dirs = [
-    [-1,0],
-    [1,0],
-    [0,-1],
-    [0,1]
-  ];
-
-  for (const [dr,dc] of cells) {
-
-    const r = anchorR + dr;
-    const c = anchorC + dc;
-
-    for (const [rr,cc] of dirs) {
-
-      const nr = r + rr;
-      const nc = c + cc;
-
-      if (!inBounds(nr,nc)) continue;
-
-      if (validOwners.includes(board[nr][nc])) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-// Kick off
+ 
+// Boot
 startGame();
 </script>
 </body>
 </html>
+ 
