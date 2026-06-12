@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERRANOVA — Territory Card Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #30363d;
+    --player:   #3b8eff;
+    --player-glow: rgba(59,142,255,0.35);
+    --ai:       #e05252;
+    --ai-glow:  rgba(224,82,82,0.35);
+    --neutral:  #21262d;
+    --grid:     #1c2128;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --accent:   #f0a500;
+    --mono:     'Share Tech Mono', monospace;
+    --sans:     'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 1.25rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--muted); font-size: 0.75rem; display: block; letter-spacing: 0.06em; margin-top: 1px; }
+  .turn-badge {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--neutral);
+    transition: all 0.3s;
+  }
+  .turn-badge.player-turn { border-color: var(--player); color: var(--player); box-shadow: 0 0 10px var(--player-glow); }
+  .turn-badge.ai-turn    { border-color: var(--ai);     color: var(--ai);     box-shadow: 0 0 10px var(--ai-glow); }
+
+  /* ── MAIN LAYOUT ── */
+  .game-shell {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1280px;
+  }
+
+  /* ── SIDE PANELS ── */
+  .side-panel {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .panel-card h3 {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .score-label { font-size: 0.78rem; color: var(--muted); width: 64px; }
+  .score-value {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .score-value.p { color: var(--player); text-shadow: 0 0 12px var(--player-glow); }
+  .score-value.a { color: var(--ai);     text-shadow: 0 0 12px var(--ai-glow); }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--neutral);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 2px;
+    margin-bottom: 10px;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--player), var(--player) var(--pct), var(--ai) var(--pct), var(--ai));
+    transition: all 0.5s ease;
+  }
+
+  /* hand cards */
+  .hand-area { display: flex; flex-direction: column; gap: 8px; }
+  .card-btn {
+    background: var(--neutral);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    text-align: center;
+  }
+  .card-btn:hover { border-color: var(--player); background: #1f2937; transform: translateX(3px); }
+  .card-btn.selected {
+    border-color: var(--player);
+    background: rgba(59,142,255,0.1);
+    box-shadow: 0 0 12px var(--player-glow);
+  }
+  .card-btn canvas { display: block; margin: 0 auto 6px; image-rendering: pixelated; }
+  .card-name { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; }
+  .card-size { font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+
+  .discard-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+  }
+  .discard-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .discard-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .rotate-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .rotate-btn:hover { border-color: var(--player); color: var(--player); }
+  .rotate-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* ── BOARD ── */
+  .board-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #gameCanvas {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: crosshair;
+    display: block;
+    background: var(--grid);
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+  }
+
+  .board-msg {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    min-height: 20px;
+    text-align: center;
+  }
+  .board-msg.ok   { color: #58a65c; }
+  .board-msg.err  { color: var(--ai); }
+  .board-msg.info { color: var(--accent); }
+
+  /* ── AI LOG ── */
+  #aiLog {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  #aiLog .entry { border-bottom: 1px solid var(--neutral); padding: 3px 0; }
+  #aiLog .entry:last-child { border: none; }
+  #aiLog .label { color: var(--ai); }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+  .overlay.active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 48px;
+    text-align: center;
+    max-width: 460px;
+    animation: popIn 0.25s ease;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal .title {
+    font-family: var(--mono);
+    font-size: 2rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+  .modal .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .modal .result-row { display: flex; justify-content: center; gap: 40px; margin-bottom: 28px; }
+  .modal .res-block { text-align: center; }
+  .modal .res-score { font-family: var(--mono); font-size: 2.8rem; font-weight: 900; line-height: 1; }
+  .modal .res-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 4px; }
+  .play-again {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    padding: 12px 32px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .play-again:hover { opacity: 0.85; }
+
+
+  .start-modal .logo-big {
+    font-family: var(--mono);
+    font-size: 2.4rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .start-modal .tagline { color: var(--muted); font-size: 0.85rem; margin-bottom: 32px; letter-spacing: 0.05em; }
+  .start-modal ul {
+    list-style: none;
+    text-align: left;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 2;
+  }
+  .start-modal ul li::before { content: '›  '; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TERRANOVA <span>TERRITORY CARD GAME</span></div>
+  <div class="turn-badge" id="turnBadge">YOUR TURN</div>
+</header>
+
+<div class="game-shell">
+  <!-- LEFT PANEL: Player hand -->
+  <div class="side-panel" id="leftPanel">
+    <div class="panel-card">
+      <h3>Your Hand</h3>
+      <div class="hand-area" id="playerHand"></div>
+      <button class="rotate-btn" id="rotateBtn" onclick="rotateSelected()" style="margin-top:8px">↻ ROTATE PIECE</button>
+      <button class="discard-btn" id="discardBtn" onclick="discardSelected()" style="margin-top:4px">↯ DISCARD (draws new)</button>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="board-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="board-msg" id="boardMsg">Select a piece from your hand, then click to place it.</div>
+  </div>
+
+  <!-- RIGHT PANEL: Score + AI log -->
+  <div class="side-panel">
+    <div class="panel-card">
+      <h3>Territory</h3>
+      <div class="score-row">
+        <span class="score-label">YOU</span>
+        <span class="score-value p" id="scoreP">0</span>
+      </div>
+      <div class="score-row">
+        <span class="score-label">MACHINE</span>
+        <span class="score-value a" id="scoreA">0</span>
+      </div>
+      <div class="progress-bar"><div class="fill" id="progBar" style="--pct:50%"></div></div>
+      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted)">
+        Tiles left: <span id="tilesLeft">—</span>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h3>AI Dispatch</h3>
+      <div id="aiLog"><div class="entry"><span class="label">[SYS] </span>Awaiting engagement…</div></div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Controls</h3>
+      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);line-height:2">
+        Click piece → click board<br>
+        ↻ Rotate before placing<br>
+        ↯ Discard (1 per turn)<br>
+        Pass if no valid move
+      </div>
+      <button class="discard-btn" id="passBtn" onclick="passTurn()" style="margin-top:10px;width:100%">⏭ PASS TURN</button>
+    </div>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay active" id="startOverlay">
+  <div class="modal start-modal">
+    <div class="logo-big">TERRANOVA</div>
+    <div class="tagline">A TERRITORY CARD GAME</div>
+    <ul>
+      <li>Pick a piece from your hand & place it on the board</li>
+      <li>Claim the most tiles to win</li>
+      <li>You cannot overlap your own tiles — but you can block the AI</li>
+      <li>Rotate pieces before placing</li>
+      <li>Game ends when no placements remain</li>
+    </ul>
+    <button class="play-again" onclick="startGame()">BEGIN ENGAGEMENT</button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay" id="endOverlay">
+  <div class="modal">
+    <div class="title" id="endTitle">GAME OVER</div>
+    <div class="subtitle" id="endSubtitle"></div>
+    <div class="result-row">
+      <div class="res-block">
+        <div class="res-score" style="color:var(--player)" id="endScoreP">0</div>
+        <div class="res-label">YOU</div>
+      </div>
+      <div class="res-block">
+        <div class="res-score" style="color:var(--ai)" id="endScoreA">0</div>
+        <div class="res-label">MACHINE</div>
+      </div>
+    </div>
+    <button class="play-again" onclick="startGame()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  TERRANOVA — Game Engine
+// ═══════════════════════════════════════════════
+
+const COLS = 20, ROWS = 18, CELL = 32;
+const OWNER_NONE = 0, OWNER_P = 1, OWNER_AI = 2, OWNER_BLOCKED = 3;
+
+// Piece definitions: arrays of [row, col] offsets
+const PIECE_DEFS = [
+  { name: 'MONOMINO', cells: [[0,0]] },
+  { name: 'DOMINO',   cells: [[0,0],[0,1]] },
+  { name: 'TRIO-I',   cells: [[0,0],[0,1],[0,2]] },
+  { name: 'TRIO-L',   cells: [[0,0],[1,0],[1,1]] },
+  { name: 'TETRO-I',  cells: [[0,0],[0,1],[0,2],[0,3]] },
+  { name: 'TETRO-L',  cells: [[0,0],[1,0],[2,0],[2,1]] },
+  { name: 'TETRO-T',  cells: [[0,1],[1,0],[1,1],[1,2]] },
+  { name: 'TETRO-S',  cells: [[0,1],[0,2],[1,0],[1,1]] },
+  { name: 'TETRO-O',  cells: [[0,0],[0,1],[1,0],[1,1]] },
+  { name: 'TETRO-J',  cells: [[0,0],[1,0],[2,0],[2,-1]] },
+  { name: 'PENTO-F',  cells: [[0,1],[1,0],[1,1],[1,2],[2,2]] },
+  { name: 'PENTO-L',  cells: [[0,0],[1,0],[2,0],[3,0],[3,1]] },
+  { name: 'PENTO-P',  cells: [[0,0],[0,1],[1,0],[1,1],[2,0]] },
+  { name: 'PENTO-Y',  cells: [[0,1],[1,0],[1,1],[2,1],[3,1]] },
+  { name: 'PENTO-U',  cells: [[0,0],[0,2],[1,0],[1,1],[1,2]] },
+  { name: 'PENTO-X',  cells: [[0,1],[1,0],[1,1],[1,2],[2,1]] },
+  { name: 'HEXA-C',   cells: [[0,0],[0,1],[1,0],[2,0],[2,1],[1,1]] },
+  { name: 'HEXA-Z',   cells: [[0,0],[0,1],[1,1],[2,1],[2,2],[1,2]] },
+];
+
+// ── State
+let board, deck, playerHand, aiHand, turn, selectedIdx, hoverCell, selectedRotation, discardUsed;
+let animQueue = [];
+
+// ── Canvas
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width  = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+// ── Piece utilities
+function rotateCells(cells) {
+  // 90° CW: [r,c] → [c, -r]
+  const rot = cells.map(([r,c]) => [c, -r]);
+  const minR = Math.min(...rot.map(x=>x[0]));
+  const minC = Math.min(...rot.map(x=>x[1]));
+  return rot.map(([r,c]) => [r-minR, c-minC]);
+}
+
+function normalizeCells(cells) {
+  const minR = Math.min(...cells.map(x=>x[0]));
+  const minC = Math.min(...cells.map(x=>x[1]));
+  return cells.map(([r,c]) => [r-minR, c-minC]);
+}
+
+function applyRotation(cells, rot) {
+  let c = cells;
+  for (let i = 0; i < rot % 4; i++) c = rotateCells(c);
+  return normalizeCells(c);
+}
+
+function getPieceCells(piece) {
+  return applyRotation(piece.cells, piece.rotation || 0);
+}
+
+// ── Deck
+function createDeck() {
+  const d = [];
+  for (let i = 0; i < 3; i++) {  // 3 copies of all pieces
+    PIECE_DEFS.forEach(def => {
+      d.push({ ...def, cells: def.cells.map(c=>[...c]), id: Math.random(), rotation: 0 });
+    });
+  }
+  return shuffle(d);
+}
+
+function shuffle(a) {
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function drawFromDeck() {
+  return deck.length ? deck.pop() : null;
+}
+
+function dealHand(count=5) {
+  const h = [];
+  for (let i=0; i<count; i++) { const p = drawFromDeck(); if (p) h.push(p); }
+  return h;
+}
+
+// ── Board helpers
+function emptyBoard() {
+  return Array.from({length:ROWS}, () => new Uint8Array(COLS));
+}
+
+function inBounds(r, c) { return r>=0 && r<ROWS && c>=0 && c<COLS; }
+
+function canPlace(cells, anchorR, anchorC, owner) {
+  for (const [dr,dc] of cells) {
+    const r=anchorR+dr, c=anchorC+dc;
+    if (!inBounds(r,c)) return false;
+    if (board[r][c] !== OWNER_NONE) return false;
+  }
+  return true;
+}
+
+function placePiece(cells, anchorR, anchorC, owner) {
+  cells.forEach(([dr,dc]) => { board[anchorR+dr][anchorC+dc] = owner; });
+}
+
+function countOwned(owner) {
+  let n=0;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (board[r][c]===owner) n++;
+  return n;
+}
+
+function countEmpty() {
+  let n=0;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (board[r][c]===OWNER_NONE) n++;
+  return n;
+}
+
+// ── Map obstacles (add interesting terrain)
+function addTerrain() {
+  const obstacles = [
+    // Mountain ridge
+    [3,4],[3,5],[4,5],[4,6],[5,6],[5,7],
+    // Lake
+    [8,10],[8,11],[9,10],[9,11],[9,12],[10,11],
+    // Forest patch
+    [13,2],[13,3],[14,2],[14,3],[14,4],
+    // Canyon
+    [2,14],[3,14],[4,14],[5,14],[6,14],
+    // Ruins
+    [11,7],[11,8],[12,7],
+    // Island cluster
+    [6,17],[7,17],[7,18],
+  ];
+  obstacles.forEach(([r,c]) => {
+    if (inBounds(r,c)) board[r][c] = OWNER_BLOCKED;
+  });
+}
+
+// ── RENDERING ──────────────────────────────────
+
+const COLOR_MAP = {
+  [OWNER_NONE]:    '#1c2128',
+  [OWNER_P]:       '#1a3a5c',
+  [OWNER_AI]:      '#3d1a1a',
+  [OWNER_BLOCKED]: '#2d3139',
+};
+const BORDER_MAP = {
+  [OWNER_NONE]:    '#262d38',
+  [OWNER_P]:       '#3b8eff',
+  [OWNER_AI]:      '#e05252',
+  [OWNER_BLOCKED]: '#383e48',
+};
+
+function drawBoard() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Cells
+  for (let r=0;r<ROWS;r++) {
+    for (let c=0;c<COLS;c++) {
+      const v = board[r][c];
+      const x=c*CELL, y=r*CELL;
+      ctx.fillStyle = COLOR_MAP[v];
+      ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+      ctx.strokeStyle = BORDER_MAP[v];
+      ctx.lineWidth = v===OWNER_NONE ? 0.5 : 1;
+      ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
+
+      // Blocked terrain texture
+      if (v === OWNER_BLOCKED) {
+        ctx.fillStyle = '#3a4050';
+        ctx.font = `${CELL*0.45}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('▲', x+CELL/2, y+CELL/2+1);
+      }
+    }
+  }
+
+  // Ghost preview
+  if (turn === 'player' && selectedIdx !== null && hoverCell) {
+    const piece = playerHand[selectedIdx];
+    if (piece) {
+      const cells = getPieceCells(piece);
+      const [hr,hc] = hoverCell;
+      const valid = canPlace(cells, hr, hc, OWNER_P);
+      cells.forEach(([dr,dc]) => {
+        const r2=hr+dr, c2=hc+dc;
+        if (!inBounds(r2,c2)) return;
+        ctx.fillStyle = valid ? 'rgba(59,142,255,0.35)' : 'rgba(224,82,82,0.25)';
+        ctx.fillRect(c2*CELL+1,r2*CELL+1,CELL-2,CELL-2);
+        ctx.strokeStyle = valid ? '#3b8eff' : '#e05252';
+        ctx.lineWidth=1.5;
+        ctx.strokeRect(c2*CELL+0.5,r2*CELL+0.5,CELL-1,CELL-1);
+      });
+    }
+  }
+
+  // Coordinates fade (subtle)
+  ctx.fillStyle='rgba(139,148,158,0.12)';
+  ctx.font='8px Share Tech Mono';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for (let r=0;r<ROWS;r+=4) for (let c=0;c<COLS;c+=4) {
+    ctx.fillText(`${c},${r}`, c*CELL+CELL/2, r*CELL+2);
+  }
+}
+
+// ── PIECE PREVIEW CARDS ──────────────────────────
+
+function renderHandCards() {
+  const el = document.getElementById('playerHand');
+  el.innerHTML = '';
+  playerHand.forEach((piece, idx) => {
+    const btn = document.createElement('div');
+    btn.className = 'card-btn' + (idx===selectedIdx?' selected':'');
+    btn.onclick = () => selectPiece(idx);
+
+    const cv = document.createElement('canvas');
+    const cells = getPieceCells(piece);
+    const maxR = Math.max(...cells.map(x=>x[0]))+1;
+    const maxC = Math.max(...cells.map(x=>x[1]))+1;
+    const S=12;
+    cv.width = Math.max(maxC,1)*S;
+    cv.height = Math.max(maxR,1)*S;
+    cv.style.width  = cv.width+'px';
+    cv.style.height = cv.height+'px';
+    const c2 = cv.getContext('2d');
+    cells.forEach(([r,col]) => {
+      c2.fillStyle='#3b8eff';
+      c2.fillRect(col*S+1,r*S+1,S-2,S-2);
+      c2.strokeStyle='#6eb0ff';
+      c2.lineWidth=0.5;
+      c2.strokeRect(col*S+0.5,r*S+0.5,S-1,S-1);
+    });
+
+    const nm = document.createElement('div'); nm.className='card-name'; nm.textContent=piece.name;
+    const sz = document.createElement('div'); sz.className='card-size'; sz.textContent=`${cells.length} tile${cells.length>1?'s':''}`;
+    btn.appendChild(cv);
+    btn.appendChild(nm);
+    btn.appendChild(sz);
+    el.appendChild(btn);
+  });
+}
+
+// ── GAME ACTIONS ─────────────────────────────────
+
+function selectPiece(idx) {
+  if (turn !== 'player') return;
+  selectedIdx = (selectedIdx === idx) ? null : idx;
+  renderHandCards();
+  setMsg(selectedIdx !== null
+    ? `[${playerHand[selectedIdx].name}] selected — click board to place.`
+    : 'Select a piece from your hand.', 'info');
+}
+
+function rotateSelected() {
+  if (selectedIdx === null || turn !== 'player') return;
+  playerHand[selectedIdx].rotation = ((playerHand[selectedIdx].rotation||0)+1)%4;
+  renderHandCards();
+  setMsg(`Piece rotated.`, 'ok');
+  drawBoard();
+}
+
+function discardSelected() {
+  if (selectedIdx === null || turn !== 'player' || discardUsed) return;
+  const removed = playerHand.splice(selectedIdx, 1)[0];
+  const newCard = drawFromDeck();
+  if (newCard) playerHand.splice(selectedIdx, 0, newCard);
+  selectedIdx = null;
+  discardUsed = true;
+  document.getElementById('discardBtn').disabled = true;
+  renderHandCards();
+  drawBoard();
+  setMsg('Piece discarded. Drew a new card.', 'ok');
+  updateHUD();
+}
+
+function passTurn() {
+  if (turn !== 'player') return;
+  logAI(`[PLAYER] Passed turn.`);
+  endPlayerTurn();
+}
+
+canvas.addEventListener('mousemove', e => {
+  if (turn !== 'player' || selectedIdx === null) { hoverCell=null; drawBoard(); return; }
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  hoverCell = [Math.floor(y/CELL), Math.floor(x/CELL)];
+  drawBoard();
+});
+
+canvas.addEventListener('mouseleave', () => { hoverCell=null; drawBoard(); });
+
+canvas.addEventListener('click', e => {
+  if (turn !== 'player' || selectedIdx === null) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const anchorR = Math.floor(y/CELL), anchorC = Math.floor(x/CELL);
+  const piece = playerHand[selectedIdx];
+  const cells = getPieceCells(piece);
+  if (!canPlace(cells, anchorR, anchorC, OWNER_P)) {
+    setMsg('Invalid placement — overlapping or out of bounds.', 'err');
+    shakeCanvas();
+    return;
+  }
+  placePiece(cells, anchorR, anchorC, OWNER_P);
+  playerHand.splice(selectedIdx,1);
+  const newCard = drawFromDeck();
+  if (newCard) playerHand.push(newCard);
+  selectedIdx = null;
+  drawBoard();
+  updateHUD();
+  setMsg('Piece placed! AI is thinking…', 'ok');
+  endPlayerTurn();
+});
+
+function endPlayerTurn() {
+  turn = 'ai';
+  selectedIdx = null;
+  discardUsed = false;
+  document.getElementById('discardBtn').disabled = false;
+  document.getElementById('turnBadge').textContent = 'MACHINE TURN';
+  document.getElementById('turnBadge').className = 'turn-badge ai-turn';
+  renderHandCards();
+  drawBoard();
+  setTimeout(aiTurn, 700);
+}
+
+// ── SCORE & HUD ──────────────────────────────────
+
+function updateHUD() {
+  const sp = countOwned(OWNER_P), sa = countOwned(OWNER_AI);
+  const total = sp + sa + 1;
+  const pct = (sp/(total))*100;
+  document.getElementById('scoreP').textContent = sp;
+  document.getElementById('scoreA').textContent = sa;
+  document.getElementById('progBar').style.setProperty('--pct', pct+'%');
+  document.getElementById('tilesLeft').textContent = countEmpty();
+}
+
+function setMsg(text, type='') {
+  const el = document.getElementById('boardMsg');
+  el.textContent = text;
+  el.className = 'board-msg '+(type||'');
+}
+
+function logAI(text) {
+  const log = document.getElementById('aiLog');
+  const entry = document.createElement('div');
+  entry.className='entry';
+  entry.innerHTML=text.replace('[PLAYER]','<span class="label">[PLAYER]</span>')
+                      .replace('[AI]','<span class="label">[AI]</span>')
+                      .replace('[SYS]','<span class="label">[SYS]</span>');
+  log.insertBefore(entry, log.firstChild);
+  while (log.children.length > 8) log.removeChild(log.lastChild);
+}
+
+function shakeCanvas() {
+  canvas.style.transition='transform 0.05s';
+  const frames = [[4,0],[-4,0],[3,0],[-2,0],[0,0]];
+  frames.forEach(([x],i) => {
+    setTimeout(()=>{ canvas.style.transform=`translateX(${frames[i][0]}px)`; },i*50);
+  });
+  setTimeout(()=>{ canvas.style.transform=''; },300);
+}
+
+// ── AI SYSTEM ────────────────────────────────────
+// Strategy: score each possible placement by how many tiles it claims
+// AND how well it blocks the player's future moves (threat reduction)
+
+function scoreAIPlacement(cells, anchorR, anchorC) {
+  const placed = cells.map(([dr,dc])=>[anchorR+dr,anchorC+dc]);
+  let score = placed.length * 2; // base: cell count
+
+  // Bonus: adjacency to already-owned AI cells (cohesion)
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  placed.forEach(([r,c]) => {
+    dirs.forEach(([dr,dc]) => {
+      const nr=r+dr, nc=c+dc;
+      if (inBounds(nr,nc)) {
+        if (board[nr][nc]===OWNER_AI) score += 1.5;
+        // Blocking player — high value
+        if (board[nr][nc]===OWNER_P) score += 2.5;
+        // Prefer center
+        const dCenter = Math.abs(nr-ROWS/2)+Math.abs(nc-COLS/2);
+        score += (1 - dCenter/(ROWS+COLS)) * 0.8;
+      }
+    });
+  });
+
+  // Penalty for edge clustering (prefer open territory)
+  placed.forEach(([r,c]) => {
+    if (r===0||r===ROWS-1||c===0||c===COLS-1) score -= 0.5;
+  });
+
+  return score;
+}
+
+function findBestAIMove(piece) {
+  const cells_base = getPieceCells(piece);
+  let best = null, bestScore = -Infinity;
+  for (let rot=0; rot<4; rot++) {
+    const cells = applyRotation(piece.cells, (piece.rotation||0)+rot);
+    for (let r=0; r<ROWS; r++) {
+      for (let c=0; c<COLS; c++) {
+        if (!canPlace(cells,r,c,OWNER_AI)) continue;
+        const s = scoreAIPlacement(cells,r,c);
+        if (s > bestScore) { bestScore=s; best={r,c,cells,rot,score:s}; }
+      }
+    }
+  }
+  return best;
+}
+
+function aiTurn() {
+  if (turn !== 'ai') return;
+
+  // Try each piece, pick the move with highest score
+  let overallBest = null, bestPieceIdx = -1;
+  aiHand.forEach((piece, idx) => {
+    const move = findBestAIMove(piece);
+    if (move && (!overallBest || move.score > overallBest.score)) {
+      overallBest = move;
+      bestPieceIdx = idx;
+    }
+  });
+
+  if (!overallBest) {
+    // No valid move — try discarding a piece for a fresh one
+    const largestIdx = aiHand.reduce((bi,p,i) => getPieceCells(p).length > getPieceCells(aiHand[bi]).length ? i : bi, 0);
+    const discarded = aiHand.splice(largestIdx,1)[0];
+    const fresh = drawFromDeck();
+    if (fresh) {
+      aiHand.push(fresh);
+      logAI(`[AI] No valid move. Discarded ${discarded.name}, drew ${fresh.name}.`);
+    } else {
+      logAI(`[AI] No valid moves and deck empty. Passing.`);
+    }
+  } else {
+    placePiece(overallBest.cells, overallBest.r, overallBest.c, OWNER_AI);
+    aiHand.splice(bestPieceIdx,1);
+    const fresh = drawFromDeck();
+    if (fresh) aiHand.push(fresh);
+    logAI(`[AI] Played ${aiHand[0]?.name||'piece'} → (${overallBest.c},${overallBest.r}) · score ${overallBest.score.toFixed(1)}`);
+  }
+
+  drawBoard();
+  updateHUD();
+
+  // Check end condition
+  if (checkGameOver()) return;
+
+  turn = 'player';
+  document.getElementById('turnBadge').textContent = 'YOUR TURN';
+  document.getElementById('turnBadge').className = 'turn-badge player-turn';
+  renderHandCards();
+  setMsg('Your turn — select a piece and place it.', '');
+}
+
+// ── END GAME ─────────────────────────────────────
+
+function checkGameOver() {
+  // End if: board is mostly full OR both hands can't place anything
+  const empty = countEmpty();
+  if (empty < 4) { endGame(); return true; }
+
+  const playerCanPlace = playerHand.some(piece => {
+    for (let rot=0;rot<4;rot++) {
+      const cells=applyRotation(piece.cells,(piece.rotation||0)+rot);
+      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+        if (canPlace(cells,r,c,OWNER_P)) return true;
+      }
+    }
+    return false;
+  });
+
+  const aiCanPlace = aiHand.some(piece => {
+    for (let rot=0;rot<4;rot++) {
+      const cells=applyRotation(piece.cells,(piece.rotation||0)+rot);
+      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+        if (canPlace(cells,r,c,OWNER_AI)) return true;
+      }
+    }
+    return false;
+  });
+
+  if (!playerCanPlace && !aiCanPlace && deck.length === 0) {
+    endGame(); return true;
+  }
+  return false;
+}
+
+function endGame() {
+  const sp = countOwned(OWNER_P), sa = countOwned(OWNER_AI);
+  document.getElementById('endScoreP').textContent = sp;
+  document.getElementById('endScoreA').textContent = sa;
+  const win = sp > sa;
+  document.getElementById('endTitle').textContent = win ? 'VICTORY' : sp===sa ? 'STALEMATE' : 'DEFEATED';
+  document.getElementById('endTitle').style.color = win ? 'var(--player)' : sp===sa ? 'var(--accent)' : 'var(--ai)';
+  document.getElementById('endSubtitle').textContent = win
+    ? `You claimed ${sp} tiles vs Machine's ${sa}. Territory secured.`
+    : sp===sa
+    ? `Dead even at ${sp} tiles each.`
+    : `Machine dominated with ${sa} tiles vs your ${sp}.`;
+  document.getElementById('endOverlay').classList.add('active');
+  turn = 'over';
+}
+
+// ── INIT ─────────────────────────────────────────
+
+function startGame() {
+  document.getElementById('startOverlay').classList.remove('active');
+  document.getElementById('endOverlay').classList.remove('active');
+  board = emptyBoard();
+  addTerrain();
+  deck = createDeck();
+  playerHand = dealHand(5);
+  aiHand = dealHand(5);
+  selectedIdx = null;
+  hoverCell = null;
+  discardUsed = false;
+  turn = 'player';
+  document.getElementById('discardBtn').disabled = false;
+  document.getElementById('turnBadge').textContent = 'YOUR TURN';
+  document.getElementById('turnBadge').className = 'turn-badge player-turn';
+  document.getElementById('aiLog').innerHTML = '<div class="entry"><span class="label">[SYS] </span>Engagement begun. Analyze and dominate.</div>';
+  renderHandCards();
+  drawBoard();
+  updateHUD();
+  setMsg('Your turn — select a piece from your hand.', '');
+}
+
+// Kick off
+startGame();
+</script>
+</body>
+</html>
