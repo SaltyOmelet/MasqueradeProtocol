@@ -162,19 +162,19 @@ canvas{
  
 #popup-image-area{
   width:100%;
-  height:200px;
-  overflow:hidden;
   position:relative;
   background:rgba(0,0,10,0.4);
 }
 #popup-image-area img{
-  width:100%;height:100%;
-  object-fit:cover;
-  opacity:0.88;
+  width:100%;
+  height:auto;
   display:block;
+  opacity:0.95;
+  border-radius:20px 20px 0 0;
 }
 #popup-image-area .img-placeholder{
-  width:100%;height:100%;
+  width:100%;
+  height:160px;
   display:flex;align-items:center;justify-content:center;
   flex-direction:column;gap:10px;
   color:rgba(180,140,255,0.4);
@@ -186,34 +186,9 @@ canvas{
   opacity:0.3;
 }
  
-#popup-body{
-  padding:20px 28px;
-}
- 
-.evidence-badge{
-  display:inline-block;
-  font-size:11px;
-  letter-spacing:3px;
-  text-transform:uppercase;
-  padding:4px 12px;
-  border-radius:20px;
-  margin-bottom:12px;
-  font-family:Arial,sans-serif;
-}
-.badge-green{background:rgba(50,180,120,0.2);color:rgba(80,220,160,0.9);border:1px solid rgba(80,220,160,0.3);}
-.badge-white{background:rgba(180,180,220,0.15);color:rgba(200,200,255,0.9);border:1px solid rgba(200,200,255,0.25);}
-.badge-red{background:rgba(200,50,60,0.2);color:rgba(255,110,120,0.9);border:1px solid rgba(255,110,120,0.3);}
- 
-#popupContent{
-  font-size:15px;
-  line-height:1.75;
-  color:rgba(220,210,255,0.9);
-  font-style:italic;
-}
- 
 #popup-footer{
-  padding:16px 28px 22px;
-  display:flex;justify-content:flex-end;
+  padding:14px 20px;
+  display:flex;justify-content:center;
 }
  
 #continueBtn{
@@ -463,10 +438,6 @@ canvas{
 <div id="popup-overlay"></div>
  
 <div id="popup">
-  <div id="popup-header">
-    <p id="popupTitle">Journal Entry Recovered</p>
-    <p id="popupSubtitle">Fragment Found</p>
-  </div>
   <div id="popup-image-area">
     <div class="img-placeholder">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -475,10 +446,6 @@ canvas{
       </svg>
       <span>Journal Image</span>
     </div>
-  </div>
-  <div id="popup-body">
-    <span id="evidenceBadge" class="evidence-badge badge-green">Evidence Found</span>
-    <p id="popupContent">Placeholder</p>
   </div>
   <div id="popup-footer">
     <button id="continueBtn" onclick="closePopup()">Continue ›</button>
@@ -796,23 +763,13 @@ function draw(){
  
 function showEvidence(){
   const lv=levels[currentLevel];
-  document.getElementById("popupTitle").textContent="Journal Entry Recovered";
-  document.getElementById("popupSubtitle").textContent=lv.title;
  
-  const badge=document.getElementById("evidenceBadge");
-  badge.className="evidence-badge "+lv.badge;
-  badge.textContent=lv.badgeLabel;
- 
-  document.getElementById("popupContent").textContent=lv.evidence;
- 
-  // Image area
   const imgArea=document.getElementById("popup-image-area");
   imgArea.innerHTML='';
   const img=document.createElement('img');
   img.src=lv.image+".png";
   img.alt="Journal entry image";
   img.onerror=function(){
-    // Fallback placeholder if image not found
     imgArea.innerHTML=`<div class="img-placeholder">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
