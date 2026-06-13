@@ -2,461 +2,865 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Memory Reconstruction Demo v3</title>
+<title>Adrian's Digital Journal</title>
 <style>
+*{box-sizing:border-box;margin:0;padding:0;}
 body{
-margin:0;
-font-family:Arial,sans-serif;
-text-align:center;
-color:white;
-
-background:linear-gradient(
- -45deg,
- #4f46e5,
- #9333ea,
- #ec4899,
- #f59e0b
-);
-
-background-size:400% 400%;
-
-animation:bgShift 15s ease infinite;
-
-min-height:100vh;
+  font-family:'Georgia',serif;
+  text-align:center;
+  color:white;
+  background:linear-gradient(-45deg,#1a0533,#2d1b69,#0f3460,#16213e);
+  background-size:400% 400%;
+  animation:bgShift 20s ease infinite;
+  min-height:100vh;
+  overflow-x:hidden;
 }
-canvas{
-background:rgba(255,255,255,.08);
-border-radius:14px;
-margin-top:10px;
-}
-#popup{
-display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-color:black;
-padding:25px;
-border-radius:12px;
-max-width:500px;
-z-index:999;
-}
-button{padding:10px 20px;}
+ 
 @keyframes bgShift{
-
- 0%{
-  background-position:0% 50%;
- }
-
- 50%{
-  background-position:100% 50%;
- }
-
- 100%{
-  background-position:0% 50%;
- }
-
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
 }
-@keyframes floatTitle{
-
- 0%{
-  transform:translateY(0px);
- }
-
- 50%{
-  transform:translateY(-8px);
- }
-
- 100%{
-  transform:translateY(0px);
- }
-
+ 
+#stars-layer{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;
 }
-
-@keyframes glowTitle{
-
- 0%{
-  text-shadow:
-   0 0 10px rgba(255,255,255,.3);
- }
-
- 50%{
-  text-shadow:
-   0 0 30px rgba(255,255,255,.8);
- }
-
- 100%{
-  text-shadow:
-   0 0 10px rgba(255,255,255,.3);
- }
-
+ 
+#game-wrapper{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 40px;
+  min-height:100vh;
 }
+ 
 #journalTitle{
-
- font-size:42px;
-
- text-shadow:
-  0 0 15px rgba(255,255,255,.5);
-
- animation:
-  floatTitle 4s ease-in-out infinite,
-  glowTitle 3s ease-in-out infinite;
+  font-size:clamp(28px,5vw,48px);
+  font-weight:normal;
+  letter-spacing:3px;
+  text-shadow:0 0 20px rgba(180,140,255,0.8),0 0 60px rgba(120,80,220,0.4);
+  animation:floatTitle 5s ease-in-out infinite,glowTitle 4s ease-in-out infinite;
+  margin-bottom:4px;
+  font-style:italic;
+}
+ 
+#subtitle{
+  font-size:13px;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  color:rgba(200,180,255,0.6);
+  margin-bottom:6px;
+}
+ 
+#levelTitle{
+  font-size:16px;
+  letter-spacing:2px;
+  color:rgba(200,180,255,0.85);
+  margin-bottom:4px;
+  font-style:italic;
+}
+ 
+#levelHint{
+  font-size:13px;
+  color:rgba(160,140,220,0.7);
+  margin-bottom:14px;
+  letter-spacing:1px;
+}
+ 
+.level-dots{
+  display:flex;gap:10px;justify-content:center;margin-bottom:14px;
+}
+.dot{
+  width:10px;height:10px;border-radius:50%;
+  border:1.5px solid rgba(180,140,255,0.5);
+  background:transparent;
+  transition:background 0.4s,box-shadow 0.4s;
+}
+.dot.active{
+  background:rgba(180,140,255,0.9);
+  box-shadow:0 0 8px rgba(180,140,255,0.8);
+}
+.dot.done{
+  background:rgba(100,220,180,0.8);
+  border-color:rgba(100,220,180,0.8);
+  box-shadow:0 0 6px rgba(100,220,180,0.6);
+}
+ 
+#canvas-container{
+  position:relative;
+  display:inline-block;
+}
+ 
+canvas{
+  border-radius:16px;
+  border:1px solid rgba(180,140,255,0.2);
+  box-shadow:0 0 40px rgba(100,60,200,0.3), 0 0 80px rgba(80,40,160,0.15), inset 0 0 60px rgba(0,0,0,0.3);
+  cursor:pointer;
+  display:block;
+}
+ 
+#click-hint{
+  font-size:12px;
+  color:rgba(160,140,220,0.55);
+  margin-top:10px;
+  letter-spacing:1px;
+}
+ 
+/* POPUP OVERLAY */
+#popup-overlay{
+  display:none;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(10,5,30,0.82);
+  z-index:900;
+  animation:fadeIn 0.3s ease;
+  backdrop-filter:blur(4px);
+}
+ 
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+ 
+#popup{
+  display:none;
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.95);
+  background:linear-gradient(160deg,#1a0f3a 0%,#0d1a3a 100%);
+  border:1px solid rgba(180,140,255,0.35);
+  box-shadow:0 0 60px rgba(100,60,200,0.5),0 20px 80px rgba(0,0,0,0.6);
+  border-radius:20px;
+  max-width:520px;
+  width:90%;
+  z-index:999;
+  overflow:hidden;
+  animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+ 
+@keyframes popIn{
+  from{opacity:0;transform:translate(-50%,-50%) scale(0.85);}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1);}
+}
+ 
+#popup-header{
+  padding:22px 28px 16px;
+  border-bottom:1px solid rgba(180,140,255,0.15);
+}
+ 
+#popupTitle{
+  font-size:13px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  color:rgba(180,140,255,0.7);
+  margin-bottom:6px;
+  font-family:Arial,sans-serif;
+}
+ 
+#popupSubtitle{
+  font-size:22px;
+  color:white;
+  font-style:italic;
+  text-shadow:0 0 20px rgba(180,140,255,0.5);
+}
+ 
+#popup-image-area{
+  width:100%;
+  height:200px;
+  overflow:hidden;
+  position:relative;
+  background:rgba(0,0,10,0.4);
+}
+#popup-image-area img{
+  width:100%;height:100%;
+  object-fit:cover;
+  opacity:0.88;
+  display:block;
+}
+#popup-image-area .img-placeholder{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;
+  color:rgba(180,140,255,0.4);
+  font-size:13px;
+  letter-spacing:2px;
+  font-family:Arial,sans-serif;
+}
+#popup-image-area .img-placeholder svg{
+  opacity:0.3;
+}
+ 
+#popup-body{
+  padding:20px 28px;
+}
+ 
+.evidence-badge{
+  display:inline-block;
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  padding:4px 12px;
+  border-radius:20px;
+  margin-bottom:12px;
+  font-family:Arial,sans-serif;
+}
+.badge-green{background:rgba(50,180,120,0.2);color:rgba(80,220,160,0.9);border:1px solid rgba(80,220,160,0.3);}
+.badge-white{background:rgba(180,180,220,0.15);color:rgba(200,200,255,0.9);border:1px solid rgba(200,200,255,0.25);}
+.badge-red{background:rgba(200,50,60,0.2);color:rgba(255,110,120,0.9);border:1px solid rgba(255,110,120,0.3);}
+ 
+#popupContent{
+  font-size:15px;
+  line-height:1.75;
+  color:rgba(220,210,255,0.9);
+  font-style:italic;
+}
+ 
+#popup-footer{
+  padding:16px 28px 22px;
+  display:flex;justify-content:flex-end;
+}
+ 
+#continueBtn{
+  background:rgba(140,100,255,0.18);
+  border:1px solid rgba(180,140,255,0.45);
+  color:rgba(200,180,255,0.95);
+  padding:10px 28px;
+  border-radius:30px;
+  font-size:13px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  font-family:Arial,sans-serif;
+  cursor:pointer;
+  transition:background 0.2s,box-shadow 0.2s,transform 0.15s;
+}
+#continueBtn:hover{
+  background:rgba(140,100,255,0.35);
+  box-shadow:0 0 20px rgba(140,100,255,0.4);
+  transform:translateY(-1px);
+}
+#continueBtn:active{transform:translateY(0);}
+ 
+/* Win screen */
+#win-overlay{
+  display:none;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(5,2,20,0.92);
+  z-index:1000;
+  align-items:center;justify-content:center;
+  flex-direction:column;
+  animation:fadeIn 0.6s ease;
+}
+#win-overlay.visible{display:flex;}
+#win-content{
+  text-align:center;
+  padding:40px;
+  max-width:500px;
+}
+#win-title{
+  font-size:36px;
+  font-style:italic;
+  text-shadow:0 0 30px rgba(255,215,100,0.8);
+  color:#facc15;
+  margin-bottom:12px;
+  animation:glowTitle 2s ease-in-out infinite;
+}
+#win-sub{
+  font-size:15px;
+  color:rgba(200,185,255,0.75);
+  letter-spacing:2px;
+  line-height:1.8;
+}
+ 
+@keyframes floatTitle{
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-6px);}
+  100%{transform:translateY(0);}
+}
+@keyframes glowTitle{
+  0%{text-shadow:0 0 15px rgba(180,140,255,0.4);}
+  50%{text-shadow:0 0 35px rgba(200,160,255,0.9),0 0 60px rgba(140,80,255,0.4);}
+  100%{text-shadow:0 0 15px rgba(180,140,255,0.4);}
+}
+ 
+/* ── Title Screen ── */
+#title-screen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  background:linear-gradient(-45deg,#1a0533,#2d1b69,#0f3460,#16213e);
+  background-size:400% 400%;
+  animation:bgShift 20s ease infinite;
+  transition:opacity 1.2s ease, visibility 1.2s ease;
+}
+#title-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+ 
+#title-particles{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;
+}
+ 
+.ts-inner{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;
+  text-align:center;
+  padding:40px;
+}
+ 
+.ts-eyebrow{
+  font-size:11px;
+  letter-spacing:7px;
+  text-transform:uppercase;
+  color:rgba(180,140,255,0.5);
+  font-family:Arial,sans-serif;
+  margin-bottom:20px;
+  animation:fadeSlideUp 1.2s ease 0.3s both;
+}
+ 
+.ts-title{
+  font-size:clamp(44px,8vw,90px);
+  font-style:italic;
+  font-weight:normal;
+  color:white;
+  letter-spacing:4px;
+  line-height:1.1;
+  margin-bottom:10px;
+  animation:fadeSlideUp 1.2s ease 0.5s both;
+  text-shadow:0 0 40px rgba(160,120,255,0.6),0 0 100px rgba(100,60,200,0.3);
+}
+ 
+.ts-name{
+  font-size:clamp(14px,2.5vw,22px);
+  letter-spacing:10px;
+  text-transform:uppercase;
+  color:rgba(200,180,255,0.6);
+  font-family:Arial,sans-serif;
+  margin-bottom:50px;
+  animation:fadeSlideUp 1.2s ease 0.7s both;
+}
+ 
+.ts-divider{
+  width:1px;
+  height:60px;
+  background:linear-gradient(to bottom,rgba(180,140,255,0),rgba(180,140,255,0.5),rgba(180,140,255,0));
+  margin-bottom:50px;
+  animation:fadeSlideUp 1s ease 1s both;
+}
+ 
+.ts-lore{
+  max-width:380px;
+  font-size:14px;
+  line-height:1.9;
+  color:rgba(180,165,230,0.7);
+  font-style:italic;
+  margin-bottom:52px;
+  animation:fadeSlideUp 1.1s ease 1.1s both;
+}
+ 
+#openBtn{
+  position:relative;
+  background:transparent;
+  border:1px solid rgba(180,140,255,0.5);
+  color:rgba(210,190,255,0.95);
+  padding:16px 52px;
+  border-radius:40px;
+  font-size:13px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  font-family:Arial,sans-serif;
+  cursor:pointer;
+  overflow:hidden;
+  animation:fadeSlideUp 1.1s ease 1.4s both;
+  transition:border-color 0.3s, color 0.3s, transform 0.2s;
+}
+#openBtn::before{
+  content:'';
+  position:absolute;top:50%;left:50%;
+  width:0;height:0;
+  background:rgba(140,100,255,0.25);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:width 0.5s ease,height 0.5s ease;
+}
+#openBtn:hover::before{width:300px;height:300px;}
+#openBtn:hover{border-color:rgba(200,170,255,0.8);color:white;transform:translateY(-2px);}
+#openBtn:active{transform:translateY(0);}
+#openBtn span{position:relative;z-index:1;}
+ 
+.ts-scroll-hint{
+  margin-top:32px;
+  font-size:11px;
+  letter-spacing:3px;
+  color:rgba(160,140,220,0.35);
+  font-family:Arial,sans-serif;
+  text-transform:uppercase;
+  animation:fadeSlideUp 1s ease 1.8s both, breathe 3s ease 2.5s infinite;
+}
+ 
+@keyframes fadeSlideUp{
+  from{opacity:0;transform:translateY(18px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes breathe{
+  0%,100%{opacity:0.35;}
+  50%{opacity:0.7;}
+}
+ 
+/* Decorative orbs on title screen */
+.ts-orb{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  animation:orbFloat linear infinite;
+}
+@keyframes orbFloat{
+  0%{transform:translateY(0) scale(1);}
+  50%{transform:translateY(-30px) scale(1.05);}
+  100%{transform:translateY(0) scale(1);}
 }
 </style>
 </head>
 <body>
-
-<h1 id="journalTitle">
-Adrian's Digital Journal
-</h1>
-<h3 id="levelTitle">Memory Reconstruction - Level 1</h3>
-<p>Rotate mirrors to guide the memory stream to the golden memory orb.</p>
-
-<canvas id="board" width="600" height="600"></canvas>
-
-<div id="popup">
-<h2 id="popupTitle">Journal Entry Recovered</h2>
-<p id="popupContent">Placeholder evidence.</p>
-<button onclick="closePopup()">Continue</button>
+ 
+<canvas id="stars-layer"></canvas>
+ 
+<!-- ── Title Screen ── -->
+<div id="title-screen">
+  <canvas id="title-particles"></canvas>
+ 
+  <div class="ts-orb" style="width:320px;height:320px;background:radial-gradient(circle,rgba(100,60,200,0.18) 0%,rgba(80,40,160,0) 70%);top:-80px;right:-60px;animation-duration:9s;"></div>
+  <div class="ts-orb" style="width:240px;height:240px;background:radial-gradient(circle,rgba(60,30,140,0.15) 0%,rgba(40,20,100,0) 70%);bottom:40px;left:-40px;animation-duration:12s;animation-delay:-4s;"></div>
+  <div class="ts-orb" style="width:180px;height:180px;background:radial-gradient(circle,rgba(180,100,255,0.12) 0%,rgba(120,60,200,0) 70%);top:30%;left:5%;animation-duration:7s;animation-delay:-2s;"></div>
+ 
+  <div class="ts-inner">
+    <p class="ts-eyebrow">A mystery in three fragments</p>
+    <h1 class="ts-title">Adrian's<br>Digital Journal</h1>
+    <p class="ts-name">Memory Reconstruction</p>
+    <div class="ts-divider"></div>
+    <p class="ts-lore">Something shattered the memories held within these pages. Rotate the mirrors. Redirect the light. Recover the truth — one fragment at a time.</p>
+    <button id="openBtn" onclick="openJournal()"><span>Open the Journal</span></button>
+    <p class="ts-scroll-hint">Three levels await</p>
+  </div>
 </div>
-
+ 
+<div id="game-wrapper">
+  <h1 id="journalTitle">Adrian's Digital Journal</h1>
+  <p id="subtitle">Memory Reconstruction</p>
+ 
+  <div class="level-dots" id="levelDots">
+    <div class="dot active" id="dot0"></div>
+    <div class="dot" id="dot1"></div>
+    <div class="dot" id="dot2"></div>
+  </div>
+ 
+  <p id="levelTitle">Level 1 · The First Fragment</p>
+  <p id="levelHint">Click mirrored tiles to rotate them · Guide the light to the golden orb</p>
+ 
+  <div id="canvas-container">
+    <canvas id="board" width="560" height="560"></canvas>
+  </div>
+  <p id="click-hint">Click any mirror to rotate it</p>
+</div>
+ 
+<!-- Popup overlay -->
+<div id="popup-overlay"></div>
+ 
+<div id="popup">
+  <div id="popup-header">
+    <p id="popupTitle">Journal Entry Recovered</p>
+    <p id="popupSubtitle">Fragment Found</p>
+  </div>
+  <div id="popup-image-area">
+    <div class="img-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span>Journal Image</span>
+    </div>
+  </div>
+  <div id="popup-body">
+    <span id="evidenceBadge" class="evidence-badge badge-green">Evidence Found</span>
+    <p id="popupContent">Placeholder</p>
+  </div>
+  <div id="popup-footer">
+    <button id="continueBtn" onclick="closePopup()">Continue ›</button>
+  </div>
+</div>
+ 
+<div id="win-overlay">
+  <div id="win-content">
+    <p id="win-title">Journal Fully Restored</p>
+    <p id="win-sub">All memory fragments have been recovered.<br>The truth hidden in Adrian's journal is now revealed.</p>
+  </div>
+</div>
+ 
 <script>
+/* ── Stars background ── */
+const starsCanvas = document.getElementById('stars-layer');
+const sCtx = starsCanvas.getContext('2d');
+let stars = [];
+function initStars(){
+  starsCanvas.width = window.innerWidth;
+  starsCanvas.height = window.innerHeight;
+  stars = [];
+  for(let i=0;i<120;i++){
+    stars.push({
+      x:Math.random()*starsCanvas.width,
+      y:Math.random()*starsCanvas.height,
+      r:Math.random()*1.6+0.2,
+      speed:0.08+Math.random()*0.25,
+      flicker:Math.random()*Math.PI*2
+    });
+  }
+}
+function drawStars(){
+  sCtx.clearRect(0,0,starsCanvas.width,starsCanvas.height);
+  stars.forEach(s=>{
+    s.y -= s.speed;
+    s.flicker += 0.025;
+    if(s.y<0){s.y=starsCanvas.height;s.x=Math.random()*starsCanvas.width;}
+    const alpha=0.2+Math.sin(s.flicker)*0.25;
+    sCtx.fillStyle=`rgba(200,185,255,${alpha})`;
+    sCtx.beginPath();
+    sCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    sCtx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+initStars();
+drawStars();
+/* ── Title screen particles ── */
+const tpCanvas=document.getElementById('title-particles');
+const tpCtx=tpCanvas.getContext('2d');
+let tpParticles=[];
+function initTitleParticles(){
+  tpCanvas.width=window.innerWidth;
+  tpCanvas.height=window.innerHeight;
+  tpParticles=[];
+  for(let i=0;i<70;i++){
+    tpParticles.push({
+      x:Math.random()*tpCanvas.width,
+      y:Math.random()*tpCanvas.height,
+      r:Math.random()*2+0.3,
+      speed:0.12+Math.random()*0.3,
+      drift:(Math.random()-0.5)*0.3,
+      flicker:Math.random()*Math.PI*2,
+      hue:Math.random()<0.6?'200,185,255':'180,140,255'
+    });
+  }
+}
+function drawTitleParticles(){
+  if(!document.getElementById('title-screen').classList.contains('hidden')){
+    tpCtx.clearRect(0,0,tpCanvas.width,tpCanvas.height);
+    tpParticles.forEach(p=>{
+      p.y-=p.speed; p.x+=p.drift; p.flicker+=0.02;
+      if(p.y<0){p.y=tpCanvas.height;p.x=Math.random()*tpCanvas.width;}
+      const a=0.15+Math.sin(p.flicker)*0.2;
+      tpCtx.fillStyle=`rgba(${p.hue},${a})`;
+      tpCtx.beginPath();
+      tpCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      tpCtx.fill();
+    });
+  }
+  requestAnimationFrame(drawTitleParticles);
+}
+window.addEventListener('resize',()=>{initStars();initTitleParticles();});
+initTitleParticles();
+drawTitleParticles();
+ 
+/* ── Open Journal transition ── */
+let gameStarted=false;
+function openJournal(){
+  const btn=document.getElementById('openBtn');
+  btn.textContent='Opening…';
+  btn.style.pointerEvents='none';
+  gameStarted=false;
+  setTimeout(()=>{
+    document.getElementById('title-screen').classList.add('hidden');
+    // Reset solved so the level is fresh, then allow success detection
+    solved=false;
+    gameStarted=true;
+  },1300);
+}
+window.openJournal=openJournal;
+ 
+/* ── Game logic ── */
 const canvas=document.getElementById("board");
 const ctx=canvas.getContext("2d");
-const particles=[];
-
-for(let i=0;i<50;i++){
-
- particles.push({
-
-  x:Math.random()*600,
-  y:Math.random()*600,
-
-  speed:0.2+Math.random()*0.6,
-
-  size:1+Math.random()*3
-
- });
-
-}
-let SIZE=6;
-let CELL=100;
-
-const source={x:0,y:0,dir:"right"};
-
+ 
 const levels=[
-
-{
- size:6,
-
- target:{x:4,y:4},
-
- mirrors:{
-  "1,0":"slash",
-  "1,5":"slash",
-  "4,5":"back",
-
-  "2,1":"back",
-  "3,3":"slash",
-  "5,2":"back"
- },
-
- evidence:"GREEN EVIDENCE: Adrian wrote that Green Mask had become increasingly resentful of his success."
-},
-
-{
- size:8,
-
- target:{x:6,y:1},
-
- mirrors:{
-  "1,0":"slash",
-  "1,7":"slash",
-  "4,7":"back",
-  "4,3":"back",
-  "6,3":"back",
-
-  "2,2":"back",
-  "2,6":"slash",
-  "3,5":"back",
-  "5,5":"slash",
-  "7,2":"back"
- },
-
- evidence:"WHITE EVIDENCE: Adrian suspected White Mask was actively attempting to stop the Continuum Protocol."
-},
-
-{
- size:10,
-
- target:{x:8,y:1},
-
- mirrors:{
-  "1,0":"slash",
-  "1,8":"slash",
-  "3,8":"back",
-  "3,2":"back",
-  "7,2":"slash",
-  "7,7":"slash",
-  "8,7":"back",
-
-  "0,6":"back",
-  "2,1":"slash",
-  "2,9":"back",
-  "4,4":"slash",
-  "5,0":"back",
-  "6,5":"back"
- },
-
- evidence:"RED EVIDENCE: Adrian expressed regret over helping his closest friend hide the consequences of a terrible act."
-}
-
+  {
+    size:6,
+    target:{x:4,y:4},
+    mirrors:{
+      "1,0":"slash","1,5":"slash","4,5":"back",
+      "2,1":"back","3,3":"slash","5,2":"back"
+    },
+    title:"The Green Envy",
+    badge:"badge-green",
+    badgeLabel:"Green Evidence",
+    evidence:"Adrian wrote that Green Mask had become increasingly resentful of his success — a festering jealousy that would change everything.",
+    image:"Journal_1"
+  },
+  {
+    size:8,
+    target:{x:6,y:1},
+    mirrors:{
+      "1,0":"slash","1,7":"slash","4,7":"back","4,3":"back","6,3":"back",
+      "2,2":"back","2,6":"slash","3,5":"back","5,5":"slash","7,2":"back"
+    },
+    title:"The White Betrayal",
+    badge:"badge-white",
+    badgeLabel:"White Evidence",
+    evidence:"Adrian suspected White Mask was actively attempting to stop the Continuum Protocol — a secret buried beneath layers of deception.",
+    image:"Journal_2"
+  },
+  {
+    size:10,
+    target:{x:8,y:1},
+    mirrors:{
+      "1,0":"slash","1,8":"slash","3,8":"back","3,2":"back","7,2":"slash","7,7":"slash","8,7":"back",
+      "0,6":"back","2,1":"slash","2,9":"back","4,4":"slash","5,0":"back","6,5":"back"
+    },
+    title:"The Red Regret",
+    badge:"badge-red",
+    badgeLabel:"Red Evidence",
+    evidence:"Adrian expressed regret over helping his closest friend hide the consequences of a terrible act — a secret that weighed on his soul.",
+    image:"Journal_3"
+  }
 ];
-
+ 
+const levelNames = ["The First Fragment","The Second Fragment","The Final Truth"];
+ 
 let currentLevel=0;
-let target={};
-let mirrors={};
-let solved=false;
-
-function loadLevel(index){
-
- SIZE=levels[index].size;
- CELL=600/SIZE;
-
- target=levels[index].target;
-
- mirrors=JSON.parse(
-  JSON.stringify(levels[index].mirrors)
- );
-
- solved=false;
-
- document.getElementById("levelTitle").innerText=
-  "Memory Reconstruction - Level "+(index+1);
-
- draw();
+let SIZE,CELL,target,mirrors;
+let solved=true;
+ 
+function loadLevel(index, resetSolved=true){
+  const lv=levels[index];
+  SIZE=lv.size;
+  CELL=560/SIZE;
+  target=lv.target;
+  mirrors=JSON.parse(JSON.stringify(lv.mirrors));
+  if(resetSolved) solved=false;
+  // Update dots
+  for(let i=0;i<3;i++){
+    const d=document.getElementById('dot'+i);
+    d.className='dot';
+    if(i<index) d.classList.add('done');
+    else if(i===index) d.classList.add('active');
+  }
+  document.getElementById("levelTitle").textContent=`Level ${index+1} · ${levelNames[index]}`;
 }
-
+ 
 function reflect(dir,type){
-
- if(type==="slash"){
-  if(dir==="right") return "up";
-  if(dir==="up") return "right";
-  if(dir==="left") return "down";
-  if(dir==="down") return "left";
- }
-
- if(type==="back"){
-  if(dir==="right") return "down";
-  if(dir==="down") return "right";
-  if(dir==="left") return "up";
-  if(dir==="up") return "left";
- }
-
- return dir;
+  if(type==="slash"){
+    if(dir==="right") return "up";
+    if(dir==="up") return "right";
+    if(dir==="left") return "down";
+    if(dir==="down") return "left";
+  }
+  if(type==="back"){
+    if(dir==="right") return "down";
+    if(dir==="down") return "right";
+    if(dir==="left") return "up";
+    if(dir==="up") return "left";
+  }
+  return dir;
 }
-
+ 
 function traceLaser(){
-
- let x=source.x;
- let y=source.y;
- let dir=source.dir;
-
- let pts=[[CELL/2,CELL/2]];
- let success=false;
-
- for(let i=0;i<200;i++){
-
-  if(dir==="right") x++;
-  else if(dir==="left") x--;
-  else if(dir==="up") y--;
-  else if(dir==="down") y++;
-
-  if(x<0||x>=SIZE||y<0||y>=SIZE) break;
-
-  pts.push([
-  x*CELL+CELL/2,
-  y*CELL+CELL/2
-  ]);
-
-  if(x===target.x && y===target.y){
-    success=true;
-    break;
+  let x=0,y=0,dir="right";
+  let pts=[[CELL/2,CELL/2]];
+  let success=false;
+  for(let i=0;i<300;i++){
+    if(dir==="right") x++;
+    else if(dir==="left") x--;
+    else if(dir==="up") y--;
+    else if(dir==="down") y++;
+    if(x<0||x>=SIZE||y<0||y>=SIZE) break;
+    pts.push([x*CELL+CELL/2,y*CELL+CELL/2]);
+    if(x===target.x && y===target.y){success=true;break;}
+    const key=`${x},${y}`;
+    if(mirrors[key]) dir=reflect(dir,mirrors[key]);
   }
-
-  const key=`${x},${y}`;
-
-  if(mirrors[key]){
-    dir=reflect(dir,mirrors[key]);
-  }
- }
-
- return {pts,success};
+  return {pts,success};
 }
-
+ 
 function draw(){
-
- ctx.clearRect(0,0,canvas.width,canvas.height);
-
- particles.forEach(p=>{
+  ctx.clearRect(0,0,canvas.width,canvas.height);
  
-  p.y-=p.speed;
+  // Grid cells
+  for(let x=0;x<SIZE;x++){
+    for(let y=0;y<SIZE;y++){
+      // Subtle cell fill
+      ctx.fillStyle = (x+y)%2===0
+        ? "rgba(255,255,255,0.018)"
+        : "rgba(255,255,255,0.008)";
+      ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+      ctx.strokeStyle="rgba(160,130,255,0.15)";
+      ctx.lineWidth=0.5;
+      ctx.strokeRect(x*CELL,y*CELL,CELL,CELL);
  
-  if(p.y<0){
-   p.y=600;
+      // Mirror
+      const key=`${x},${y}`;
+      if(mirrors[key]){
+        const cx=x*CELL+CELL/2, cy=y*CELL+CELL/2;
+        const hw=CELL*0.32;
+ 
+        // Mirror glow bg
+        ctx.save();
+        const mg=ctx.createRadialGradient(cx,cy,0,cx,cy,CELL*0.4);
+        mg.addColorStop(0,"rgba(180,140,255,0.12)");
+        mg.addColorStop(1,"rgba(180,140,255,0)");
+        ctx.fillStyle=mg;
+        ctx.beginPath();
+        ctx.arc(cx,cy,CELL*0.4,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+ 
+        // Mirror line
+        ctx.strokeStyle="rgba(210,185,255,0.9)";
+        ctx.lineWidth=Math.max(2,CELL*0.045);
+        ctx.lineCap="round";
+        ctx.beginPath();
+        if(mirrors[key]==="slash"){
+          ctx.moveTo(x*CELL+CELL*0.75,y*CELL+CELL*0.1);
+          ctx.lineTo(x*CELL+CELL*0.1,y*CELL+CELL*0.75);
+        }else{
+          ctx.moveTo(x*CELL+CELL*0.1,y*CELL+CELL*0.1);
+          ctx.lineTo(x*CELL+CELL*0.75,y*CELL+CELL*0.75);
+        }
+        ctx.stroke();
+      }
+    }
   }
  
-  ctx.fillStyle=
-   "rgba(255,255,255,.25)";
- 
+  // Source node
+  const srcPulse = 0.85+Math.sin(Date.now()*0.004)*0.15;
+  ctx.save();
+  const srcG=ctx.createRadialGradient(CELL/2,CELL/2,0,CELL/2,CELL/2,CELL*0.3);
+  srcG.addColorStop(0,"rgba(100,220,255,0.9)");
+  srcG.addColorStop(1,"rgba(50,120,200,0)");
+  ctx.fillStyle=srcG;
   ctx.beginPath();
- 
-  ctx.arc(
-   p.x,
-   p.y,
-   p.size,
-   0,
-   Math.PI*2
-  );
- 
+  ctx.arc(CELL/2,CELL/2,CELL*0.28*srcPulse,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle="#67e8f9";
+  ctx.beginPath();
+  ctx.arc(CELL/2,CELL/2,Math.max(7,CELL*0.14),0,Math.PI*2);
   ctx.fill();
  
- });
+  // Target orb
+  const orbPulse=Math.sin(Date.now()*0.006)*0.15+0.85;
+  const tx=target.x*CELL+CELL/2, ty=target.y*CELL+CELL/2;
+  ctx.save();
+  const orbG=ctx.createRadialGradient(tx,ty,0,tx,ty,CELL*0.45);
+  orbG.addColorStop(0,"rgba(255,220,50,0.9)");
+  orbG.addColorStop(0.5,"rgba(255,170,20,0.35)");
+  orbG.addColorStop(1,"rgba(255,150,0,0)");
+  ctx.fillStyle=orbG;
+  ctx.beginPath();
+  ctx.arc(tx,ty,CELL*0.42*orbPulse,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle="#fcd34d";
+  ctx.beginPath();
+  ctx.arc(tx,ty,Math.max(9,CELL*0.18),0,Math.PI*2);
+  ctx.fill();
  
- for(let x=0;x<SIZE;x++){
-  for(let y=0;y<SIZE;y++){
-
-   ctx.strokeStyle="rgba(255,255,255,.25)";
-   ctx.strokeRect(x*CELL,y*CELL,CELL,CELL);
-
-   const key=`${x},${y}`;
-
-   if(mirrors[key]){
-
-    ctx.strokeStyle="white";
-    ctx.lineWidth=5;
-
+  // Laser beam
+  const laser=traceLaser();
+  if(laser.pts.length>1){
+    ctx.save();
+    ctx.shadowColor="#67e8f9";
+    ctx.shadowBlur=8;
+    const laserPulse=2+Math.sin(Date.now()*0.009)*1.2;
+    ctx.strokeStyle=laser.success ? "rgba(250,210,60,0.9)" : "rgba(100,230,255,0.85)";
+    ctx.lineWidth=laserPulse;
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
     ctx.beginPath();
-
-    if(mirrors[key]==="slash"){
-      ctx.moveTo(x*CELL+CELL,y*CELL);
-      ctx.lineTo(x*CELL,y*CELL+CELL);
-    }else{
-      ctx.moveTo(x*CELL,y*CELL);
-      ctx.lineTo(x*CELL+CELL,y*CELL+CELL);
-    }
-
+    laser.pts.forEach((p,i)=>{
+      if(i===0) ctx.moveTo(p[0],p[1]);
+      else ctx.lineTo(p[0],p[1]);
+    });
     ctx.stroke();
-   }
+    ctx.restore();
   }
- }
-
- ctx.fillStyle="#22d3ee";
- ctx.beginPath();
- ctx.arc(
-  CELL/2,
-  CELL/2,
-  Math.max(8,CELL*0.18),
-  0,
-  Math.PI*2
- );
- ctx.fill();
-
- const orbPulse=
-  Math.sin(Date.now()*0.005)*4;
  
- ctx.fillStyle="#facc15";
- 
- ctx.beginPath();
- 
- ctx.arc(
-  target.x*CELL+CELL/2,
-  target.y*CELL+CELL/2,
-  Math.max(10,CELL*0.22)+orbPulse,
-  0,
-  Math.PI*2
- );
-
-ctx.fill();
-
- const laser=traceLaser();
-
- const pulse=
-  4 + Math.sin(Date.now()*0.008)*2;
- 
- ctx.strokeStyle="#22d3ee";
- ctx.lineWidth=pulse;
- ctx.beginPath();
-
- laser.pts.forEach((p,i)=>{
-   if(i===0) ctx.moveTo(p[0],p[1]);
-   else ctx.lineTo(p[0],p[1]);
- });
-
- ctx.stroke();
-
- if(laser.success && !solved){
-   solved=true;
-   setTimeout(showEvidence,100);
- }
+  if(laser.success && !solved && gameStarted){
+    solved=true;
+    setTimeout(showEvidence,400);
+  }
 }
-
+ 
 function showEvidence(){
-
- document.getElementById("popupTitle").innerText="Journal Entry Recovered";
-
- document.getElementById("popupContent").innerText=
-  levels[currentLevel].evidence;
-
- document.getElementById("popup").style.display="block";
-}
-
-function closePopup(){
-
- document.getElementById("popup").style.display="none";
-
- currentLevel++;
-
- if(currentLevel<levels.length){
-   loadLevel(currentLevel);
- }else{
-   document.getElementById("popupTitle").innerText=
-     "Journal Fully Restored";
-
-   document.getElementById("popupContent").innerText=
-     "All memory fragments recovered.";
-
-   document.getElementById("popup").style.display="block";
- }
-}
-
-canvas.addEventListener("click",(e)=>{
-
- if(solved) return;
-
- const rect=canvas.getBoundingClientRect();
-
- const x=Math.floor((e.clientX-rect.left)/CELL);
- const y=Math.floor((e.clientY-rect.top)/CELL);
-
- const key=`${x},${y}`;
-
- if(mirrors[key]){
-   mirrors[key]=mirrors[key]==="slash"?"back":"slash";
- }
-});
-
-function animate(){
-
- draw();
-
- requestAnimationFrame(animate);
-
+  const lv=levels[currentLevel];
+  document.getElementById("popupTitle").textContent="Journal Entry Recovered";
+  document.getElementById("popupSubtitle").textContent=lv.title;
+ 
+  const badge=document.getElementById("evidenceBadge");
+  badge.className="evidence-badge "+lv.badge;
+  badge.textContent=lv.badgeLabel;
+ 
+  document.getElementById("popupContent").textContent=lv.evidence;
+ 
+  // Image area
+  const imgArea=document.getElementById("popup-image-area");
+  imgArea.innerHTML='';
+  const img=document.createElement('img');
+  img.src=lv.image+".png";
+  img.alt="Journal entry image";
+  img.onerror=function(){
+    // Fallback placeholder if image not found
+    imgArea.innerHTML=`<div class="img-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span>${lv.image}</span>
+    </div>`;
+  };
+  imgArea.appendChild(img);
+ 
+  document.getElementById("popup-overlay").style.display="block";
+  document.getElementById("popup").style.display="block";
 }
  
-loadLevel(0);
+function closePopup(){
+  document.getElementById("popup-overlay").style.display="none";
+  document.getElementById("popup").style.display="none";
+  currentLevel++;
+  if(currentLevel<levels.length){
+    loadLevel(currentLevel);
+  }else{
+    document.getElementById("win-overlay").classList.add('visible');
+  }
+}
+window.closePopup=closePopup;
+ 
+canvas.addEventListener("click",(e)=>{
+  if(solved) return;
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const x=Math.floor((e.clientX-rect.left)*scaleX/CELL);
+  const y=Math.floor((e.clientY-rect.top)*scaleY/CELL);
+  const key=`${x},${y}`;
+  if(mirrors[key]){
+    mirrors[key]=mirrors[key]==="slash"?"back":"slash";
+  }
+});
+ 
+function animate(){
+  draw();
+  requestAnimationFrame(animate);
+}
+ 
+loadLevel(0, false);
 animate();
 </script>
 </body>
 </html>
+ 
