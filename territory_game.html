@@ -3,25 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TERRANOVA — Territory Card Game</title>
+<title>THE MASQUERADE PROTOCOL — Eclipse Tower Evidence Game</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;600;700;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap');
  
   :root {
-    --bg:         #0d1117;
-    --surface:    #161b22;
-    --border:     #30363d;
-    --player:     #3b8eff;
-    --player-glow:rgba(59,142,255,0.35);
-    --ai:         #e05252;
-    --ai-glow:    rgba(224,82,82,0.35);
-    --neutral:    #21262d;
-    --grid:       #1c2128;
-    --text:       #e6edf3;
-    --muted:      #8b949e;
-    --accent:     #f0a500;
-    --mono:       'Share Tech Mono', monospace;
-    --sans:       'Barlow', sans-serif;
+    --bg:           #04080f;
+    --surface:      #080e1a;
+    --border:       #0e1e35;
+    --player:       #00c2ff;
+    --player-glow:  rgba(0,194,255,0.35);
+    --ai:           #cc2244;
+    --ai-glow:      rgba(204,34,68,0.35);
+    --neutral:      #0a1220;
+    --grid:         #060b14;
+    --text:         #c8ddf0;
+    --muted:        #3a5a7a;
+    --accent:       #00c2ff;
+    --red:          #cc2244;
+    --oracle:       #7b4fff;
+    --oracle-glow:  rgba(123,79,255,0.4);
+    --mono:         'Share Tech Mono', monospace;
+    --sans:         'Rajdhani', sans-serif;
+    --display:      'Orbitron', sans-serif;
   }
  
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,146 +41,334 @@
     overflow-x: hidden;
   }
  
+  /* ══ SCANLINE OVERLAY ══ */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,194,255,0.015) 2px,
+      rgba(0,194,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+ 
+  /* ══ TITLE SCREEN ══ */
+  #titleScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    background-image:
+      radial-gradient(ellipse at 50% 20%, rgba(123,79,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(0,194,255,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 60%, rgba(204,34,68,0.04) 0%, transparent 50%);
+  }
+  #titleScreen.hidden { display: none; }
+ 
+  .title-eyebrow {
+    font-family: var(--mono);
+    color: var(--oracle);
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+ 
+  .title-main {
+    font-family: var(--display);
+    font-size: clamp(1.8rem, 5vw, 3.8rem);
+    font-weight: 900;
+    color: var(--player);
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-shadow: 0 0 40px rgba(0,194,255,0.5), 0 0 80px rgba(0,194,255,0.2);
+    margin-bottom: 4px;
+  }
+ 
+  .title-sub {
+    font-family: var(--display);
+    font-size: clamp(0.7rem, 1.5vw, 1rem);
+    font-weight: 400;
+    color: var(--oracle);
+    letter-spacing: 0.3em;
+    margin-bottom: 28px;
+    text-shadow: 0 0 20px rgba(123,79,255,0.6);
+  }
+ 
+  .title-divider {
+    width: 300px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--oracle), var(--player), var(--oracle), transparent);
+    margin: 0 auto 24px;
+    opacity: 0.4;
+  }
+ 
+  .title-flavour {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.9;
+    margin-bottom: 36px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+  }
+  .title-flavour strong { color: var(--player); font-weight: 600; }
+  .title-flavour em { color: var(--oracle); font-style: normal; }
+ 
+  .title-start-btn {
+    background: transparent;
+    border: 1px solid var(--player);
+    color: var(--player);
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    padding: 14px 52px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,194,255,0.1), inset 0 0 20px rgba(0,194,255,0.03);
+  }
+  .title-start-btn:hover {
+    background: rgba(0,194,255,0.06);
+    box-shadow: 0 0 40px rgba(0,194,255,0.25), inset 0 0 20px rgba(0,194,255,0.06);
+    letter-spacing: 0.4em;
+  }
+ 
+  .oracle-pulse {
+    font-family: var(--mono);
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    animation: oraclePulse 2.5s ease-in-out infinite alternate;
+    color: var(--oracle);
+    text-shadow: 0 0 30px rgba(123,79,255,0.8);
+  }
+  @keyframes oraclePulse {
+    from { opacity: 0.6; text-shadow: 0 0 20px rgba(123,79,255,0.5); }
+    to   { opacity: 1;   text-shadow: 0 0 50px rgba(123,79,255,1); }
+  }
+ 
+  /* ══ RULES SCREEN ══ */
+  #rulesScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    background-image: radial-gradient(ellipse at 50% 0%, rgba(123,79,255,0.07) 0%, transparent 60%);
+  }
+  #rulesScreen.visible { display: flex; }
+ 
+  .rules-title {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--player);
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+    text-shadow: 0 0 30px rgba(0,194,255,0.4);
+  }
+  .rules-sub {
+    font-family: var(--mono);
+    color: var(--oracle);
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 22px;
+  }
+  .rules-list {
+    list-style: none;
+    text-align: left;
+    max-width: 520px;
+    margin: 0 auto 32px;
+    line-height: 2.2;
+    font-size: 0.92rem;
+    color: var(--text);
+    font-weight: 400;
+  }
+  .rules-list li::before {
+    content: '▸  ';
+    color: var(--player);
+    font-size: 0.65rem;
+  }
+  .rules-list em { color: var(--player); font-style: normal; font-weight: 600; }
+  .rules-list .oracle-em { color: var(--oracle); font-style: normal; }
+ 
+  /* ══ HEADER ══ */
   header {
     width: 100%;
-    padding: 14px 32px;
+    padding: 10px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+    box-shadow: 0 1px 20px rgba(0,0,0,0.5);
   }
-  .logo { font-family: var(--mono); font-size: 1.25rem; letter-spacing: 0.18em; color: var(--accent); }
-  .logo span { color: var(--muted); font-size: 0.75rem; display: block; letter-spacing: 0.06em; margin-top: 1px; }
+  .logo {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--player);
+    text-shadow: 0 0 16px rgba(0,194,255,0.4);
+  }
+  .logo span {
+    color: var(--muted);
+    font-size: 0.58rem;
+    display: block;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+    font-family: var(--mono);
+    font-weight: 400;
+  }
  
-  .header-right { display: flex; align-items: center; gap: 14px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
  
   .round-pill {
     font-family: var(--mono);
-    font-size: 0.78rem;
+    font-size: 0.7rem;
     letter-spacing: 0.1em;
-    padding: 6px 14px;
-    border-radius: 4px;
-    border: 1px solid var(--accent);
-    color: var(--accent);
+    padding: 5px 14px;
+    border: 1px solid var(--oracle);
+    color: var(--oracle);
     background: var(--neutral);
+    box-shadow: 0 0 8px rgba(123,79,255,0.2);
   }
  
   .turn-badge {
     font-family: var(--mono);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     letter-spacing: 0.1em;
-    padding: 6px 14px;
-    border-radius: 4px;
+    padding: 5px 14px;
     border: 1px solid var(--border);
     background: var(--neutral);
     transition: all 0.3s;
   }
-  .turn-badge.player-turn { border-color: var(--player); color: var(--player); box-shadow: 0 0 10px var(--player-glow); }
-  .turn-badge.ai-turn     { border-color: var(--ai);     color: var(--ai);     box-shadow: 0 0 10px var(--ai-glow); }
+  .turn-badge.player-turn { border-color: var(--player); color: var(--player); box-shadow: 0 0 12px var(--player-glow); }
+  .turn-badge.ai-turn     { border-color: var(--ai);     color: var(--ai);     box-shadow: 0 0 12px var(--ai-glow); }
  
+  /* ══ LAYOUT ══ */
   .game-shell {
     display: flex;
     gap: 16px;
-    padding: 20px 24px;
+    padding: 18px 22px;
     align-items: flex-start;
     width: 100%;
     max-width: 1280px;
   }
  
-  .side-panel { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side-panel { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
  
   .panel-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
+    padding: 13px;
   }
   .panel-card h3 {
     font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
     color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
   }
  
   .score-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-  .score-label { font-size: 0.78rem; color: var(--muted); width: 64px; }
-  .score-value { font-family: var(--mono); font-size: 1.6rem; font-weight: bold; line-height: 1; }
+  .score-label { font-size: 0.72rem; color: var(--muted); width: 80px; font-family: var(--mono); letter-spacing: 0.05em; }
+  .score-value { font-family: var(--mono); font-size: 1.5rem; font-weight: bold; line-height: 1; }
   .score-value.p { color: var(--player); text-shadow: 0 0 12px var(--player-glow); }
   .score-value.a { color: var(--ai);     text-shadow: 0 0 12px var(--ai-glow); }
  
-  .progress-bar { height: 6px; background: var(--neutral); border-radius: 3px; overflow: hidden; margin-top: 2px; margin-bottom: 10px; }
+  .progress-bar { height: 3px; background: var(--neutral); overflow: hidden; margin: 4px 0 10px; }
   .progress-bar .fill {
     height: 100%;
     background: linear-gradient(90deg, var(--player) 0%, var(--player) var(--pct), var(--ai) var(--pct), var(--ai) 100%);
     transition: all 0.5s ease;
   }
  
-  .hand-area { display: flex; flex-direction: column; gap: 8px; }
+  .hand-area { display: flex; flex-direction: column; gap: 7px; }
   .card-btn {
     background: var(--neutral);
-    border: 1.5px solid var(--border);
-    border-radius: 6px;
-    padding: 10px;
+    border: 1px solid var(--border);
+    padding: 9px;
     cursor: pointer;
     transition: all 0.15s;
     text-align: center;
   }
-  .card-btn:hover { border-color: var(--player); background: #1f2937; transform: translateX(3px); }
-  .card-btn.selected { border-color: var(--player); background: rgba(59,142,255,0.1); box-shadow: 0 0 12px var(--player-glow); }
-  .card-btn canvas { display: block; margin: 0 auto 6px; image-rendering: pixelated; }
-  .card-name { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; }
-  .card-size { font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+  .card-btn:hover { border-color: var(--player); background: rgba(0,194,255,0.04); transform: translateX(3px); }
+  .card-btn.selected { border-color: var(--player); background: rgba(0,194,255,0.07); box-shadow: 0 0 14px var(--player-glow); }
+  .card-btn canvas { display: block; margin: 0 auto 5px; image-rendering: pixelated; }
+  .card-name { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); letter-spacing: 0.06em; }
+  .card-size { font-size: 0.55rem; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
  
   .action-btn {
     width: 100%;
     margin-top: 6px;
     background: transparent;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
+    padding: 7px;
     color: var(--muted);
     font-family: var(--mono);
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     cursor: pointer;
     letter-spacing: 0.08em;
     transition: all 0.2s;
   }
   .action-btn:hover:not(:disabled) { border-color: var(--player); color: var(--player); }
-  .action-btn.danger:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-  .action-btn:disabled { opacity: 0.35; cursor: default; }
+  .action-btn.danger:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+  .action-btn:disabled { opacity: 0.28; cursor: default; }
  
-  .board-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .board-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
  
   #gameCanvas {
     border: 1px solid var(--border);
-    border-radius: 8px;
     cursor: crosshair;
     display: block;
     background: var(--grid);
-    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    box-shadow: 0 0 60px rgba(0,0,0,0.9), 0 0 20px rgba(0,194,255,0.04);
   }
  
   .board-msg {
     font-family: var(--mono);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--muted);
     letter-spacing: 0.1em;
-    min-height: 20px;
+    min-height: 18px;
     text-align: center;
   }
-  .board-msg.ok   { color: #58a65c; }
-  .board-msg.err  { color: var(--ai); }
-  .board-msg.info { color: var(--accent); }
+  .board-msg.ok   { color: #00e5a0; }
+  .board-msg.err  { color: var(--red); }
+  .board-msg.info { color: var(--oracle); }
  
-  #aiLog { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); line-height: 1.7; }
+  #aiLog { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); line-height: 1.8; }
   #aiLog .entry { border-bottom: 1px solid var(--neutral); padding: 3px 0; }
   #aiLog .entry:last-child { border: none; }
-  #aiLog .label { color: var(--ai); }
+  #aiLog .label-oracle { color: var(--oracle); }
+  #aiLog .label-suspect { color: var(--red); }
+  #aiLog .label-insp    { color: var(--player); }
  
-  /* Overlays */
+  /* ══ END OVERLAY ══ */
   .overlay {
     display: flex;
     visibility: hidden;
@@ -184,190 +376,249 @@
     pointer-events: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.82);
+    background: rgba(2,5,12,0.92);
     z-index: 100;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s;
+    transition: opacity 0.3s;
   }
   .overlay.active { visibility: visible; opacity: 1; pointer-events: all; }
  
   .modal {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
     padding: 40px 48px;
     text-align: center;
-    max-width: 480px;
-    width: 90%;
-    animation: popIn 0.25s ease;
+    max-width: 520px;
+    width: 92%;
+    animation: popIn 0.3s ease;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(123,79,255,0.1);
+  }
+  .modal::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(0,194,255,0.08);
+    pointer-events: none;
   }
   @keyframes popIn {
-    from { opacity: 0; transform: scale(0.88); }
-    to   { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: scale(0.9) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
   }
+ 
   .modal .m-title {
-    font-family: var(--mono);
-    font-size: 2rem;
+    font-family: var(--display);
+    font-size: 1.9rem;
+    font-weight: 900;
     letter-spacing: 0.12em;
     margin-bottom: 6px;
   }
-  .modal .m-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 28px; line-height: 1.6; }
-  .modal .result-row { display: flex; justify-content: center; gap: 40px; margin-bottom: 28px; }
-  .modal .res-score { font-family: var(--mono); font-size: 2.8rem; font-weight: 900; line-height: 1; }
-  .modal .res-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 4px; }
+  .modal .m-sub {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-bottom: 24px;
+    line-height: 1.75;
+    font-family: var(--sans);
+  }
+  .modal .result-row { display: flex; justify-content: center; gap: 52px; margin-bottom: 24px; }
+  .modal .res-score { font-family: var(--mono); font-size: 2.6rem; font-weight: 900; line-height: 1; }
+  .modal .res-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.14em; margin-top: 4px; font-family: var(--mono); }
  
-  .logo-big { font-family: var(--mono); font-size: 2.4rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 4px; }
-  .tagline { color: var(--muted); font-size: 0.85rem; margin-bottom: 24px; letter-spacing: 0.05em; }
-  .rules { list-style: none; text-align: left; font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; line-height: 2.1; }
-  .rules li::before { content: '›  '; color: var(--accent); }
+  .reward-note {
+    font-family: var(--sans);
+    font-size: 0.87rem;
+    color: var(--muted);
+    margin-bottom: 26px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    line-height: 1.75;
+    background: rgba(123,79,255,0.04);
+    text-align: left;
+  }
+  .reward-note strong { color: var(--oracle); font-weight: 600; }
+  .reward-note .highlight { color: var(--player); font-weight: 600; }
  
   .cta-btn {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: 6px;
-    padding: 12px 32px;
-    font-family: var(--sans);
+    background: transparent;
+    border: 1px solid var(--player);
+    color: var(--player);
+    padding: 11px 36px;
+    font-family: var(--display);
+    font-size: 0.8rem;
     font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.2em;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    box-shadow: 0 0 16px rgba(0,194,255,0.1);
   }
-  .cta-btn:hover { opacity: 0.85; }
+  .cta-btn:hover {
+    background: rgba(0,194,255,0.06);
+    box-shadow: 0 0 28px rgba(0,194,255,0.2);
+  }
 </style>
 </head>
 <body>
  
+<!-- ══ TITLE SCREEN ══ -->
+<div id="titleScreen">
+  <div class="oracle-pulse">◈</div>
+  <div class="title-eyebrow">Eclipse Tower · Year 2089 · Classified</div>
+  <div class="title-main">THE MASQUERADE<br>PROTOCOL</div>
+  <div class="title-sub">ECLIPSE TOWER EVIDENCE RECOVERY SYSTEM</div>
+  <div class="title-divider"></div>
+  <p class="title-flavour">
+    <strong>Adrian Voss is dead.</strong><br>
+    The Continuum Protocol scattered fragments of truth across the gala floor.<br>
+    A suspect is concealing evidence before it can be recovered.<br>
+    <em>ORACLE is watching.</em> Claim the evidence before it disappears forever.
+  </p>
+  <button class="title-start-btn" onclick="showRules()">Access Eclipse Tower</button>
+</div>
+ 
+<!-- ══ RULES SCREEN ══ -->
+<div id="rulesScreen">
+  <div class="rules-title">MISSION BRIEFING</div>
+  <div class="rules-sub">// ORACLE SYSTEM · EVIDENCE RECOVERY PROTOCOL //</div>
+  <div class="title-divider"></div>
+  <ul class="rules-list">
+    <li>You are the <em>lead investigator</em> — recover evidence tiles starting from your sector</li>
+    <li>Place one evidence fragment per turn — it must connect to your claimed territory</li>
+    <li>Your first card must touch your <em>base position</em> (your entry point into the tower)</li>
+    <li>Rotate fragments to fit the floor plan — exchange one card per turn</li>
+    <li><em>×2 tiles</em> are <span class="oracle-em">Critical Crime Scenes</span> — worth double evidence points</li>
+    <li>The investigation closes after <em>15 rounds</em> — most evidence recovered wins</li>
+    <li>Whoever secures the most evidence <em>unlocks the Photographer's Contact Sheet</em></li>
+  </ul>
+  <button class="cta-btn" onclick="beginInvestigation()">Begin Recovery</button>
+</div>
+ 
+<!-- ══ GAME UI ══ -->
 <header>
-  <div class="logo">TERRANOVA <span>TERRITORY CARD GAME</span></div>
+  <div class="logo">MASQUERADE PROTOCOL <span>ECLIPSE TOWER · EVIDENCE RECOVERY · LUMEN PHOTOGRAPHY REWARD</span></div>
   <div class="header-right">
-    <div class="round-pill" id="roundBadge">ROUND 1 / 10</div>
-    <div class="turn-badge player-turn" id="turnBadge">YOUR TURN</div>
+    <div class="round-pill" id="roundBadge">ROUND 1 / 15</div>
+    <div class="turn-badge player-turn" id="turnBadge">INVESTIGATOR</div>
   </div>
 </header>
  
 <div class="game-shell">
  
-  <!-- LEFT: Player hand -->
+  <!-- LEFT: Investigator hand -->
   <div class="side-panel">
     <div class="panel-card">
-      <h3>Your Hand</h3>
+      <h3>Evidence Fragments</h3>
       <div class="hand-area" id="playerHand"></div>
-      <button class="action-btn" id="rotateBtn" onclick="rotateSelected()">↻ ROTATE PIECE</button>
-      <button class="action-btn danger" id="discardBtn" onclick="discardSelected()">↯ DISCARD (once per turn)</button>
+      <button class="action-btn" id="rotateBtn" onclick="rotateSelected()">↻ ROTATE FRAGMENT</button>
+      <button class="action-btn danger" id="discardBtn" onclick="discardSelected()">↯ EXCHANGE FRAGMENT (once)</button>
     </div>
   </div>
  
-  <!-- BOARD -->
+  <!-- BOARD: Eclipse Tower Gala Floor -->
   <div class="board-wrap">
     <canvas id="gameCanvas"></canvas>
-    <div class="board-msg" id="boardMsg">Select a piece, then click your territory to place it.</div>
+    <div class="board-msg" id="boardMsg">Select an evidence fragment, then claim a section of the gala floor.</div>
   </div>
  
-  <!-- RIGHT: Scores + log + controls -->
+  <!-- RIGHT: Evidence + ORACLE log + controls -->
   <div class="side-panel">
     <div class="panel-card">
-      <h3>Territory</h3>
+      <h3>Evidence Secured</h3>
       <div class="score-row">
-        <span class="score-label">YOU</span>
+        <span class="score-label">INVESTIGATOR</span>
         <span class="score-value p" id="scoreP">0</span>
       </div>
       <div class="score-row">
-        <span class="score-label">MACHINE</span>
+        <span class="score-label">CONCEALED</span>
         <span class="score-value a" id="scoreA">0</span>
       </div>
       <div class="progress-bar"><div class="fill" id="progBar" style="--pct:50%"></div></div>
-      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted)">
-        Open tiles: <span id="tilesLeft">—</span>
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted)">
+        Unclaimed tiles: <span id="tilesLeft">—</span>
       </div>
     </div>
  
     <div class="panel-card">
-      <h3>AI Dispatch</h3>
-      <div id="aiLog"><div class="entry"><span class="label">[SYS] </span>Awaiting engagement…</div></div>
+      <h3>ORACLE · Activity Log</h3>
+      <div id="aiLog"><div class="entry"><span class="label-oracle">[ORACLE] </span>Evidence recovery initiated…</div></div>
     </div>
  
     <div class="panel-card">
-      <h3>Rules</h3>
-      <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);line-height:2">
-        Place 1 piece per turn<br>
-        Must connect to your territory<br>
-        First move touches your base<br>
-        Game ends after 15 rounds<br>
-        ×2 tiles score double points<br>
-        Most tiles wins
+      <h3>Field Protocol</h3>
+      <div style="font-family:var(--mono);font-size:0.58rem;color:var(--muted);line-height:2.2">
+        Place 1 fragment per turn<br>
+        Must connect to your sector<br>
+        First piece must touch your base<br>
+        ×2 tiles = critical crime scenes<br>
+        Ends after 15 rounds<br>
+        Most evidence wins
       </div>
       <button class="action-btn" id="passBtn" onclick="passTurn()" style="margin-top:10px">⏭ PASS TURN</button>
     </div>
   </div>
 </div>
  
-<!-- Start overlay -->
-<div class="overlay active" id="startOverlay">
-  <div class="modal">
-    <div class="logo-big">TERRANOVA</div>
-    <div class="tagline">TERRITORY CARD GAME · 15 ROUNDS</div>
-    <ul class="rules">
-      <li>Each player has a base on opposite corners</li>
-      <li>Place 1 piece per turn — must connect to your territory</li>
-      <li>Your first piece must touch your base (blue corner)</li>
-      <li>Rotate pieces before placing · discard once per turn</li>
-      <li>Neon ×2 tiles in the centre score double points</li>
-      <li>Game ends after 15 rounds — most points wins</li>
-    </ul>
-    <button class="cta-btn" onclick="startGame()">BEGIN ENGAGEMENT</button>
-  </div>
-</div>
- 
 <!-- End overlay -->
 <div class="overlay" id="endOverlay">
   <div class="modal">
-    <div class="m-title" id="endTitle">GAME OVER</div>
+    <div class="m-title" id="endTitle">CASE CLOSED</div>
     <div class="m-sub" id="endSubtitle"></div>
     <div class="result-row">
       <div>
         <div class="res-score" style="color:var(--player)" id="endScoreP">0</div>
-        <div class="res-label">YOU</div>
+        <div class="res-label">INVESTIGATOR</div>
       </div>
       <div>
         <div class="res-score" style="color:var(--ai)" id="endScoreA">0</div>
-        <div class="res-label">MACHINE</div>
+        <div class="res-label">CONCEALED</div>
       </div>
     </div>
-    <button class="cta-btn" onclick="startGame()">PLAY AGAIN</button>
+    <div class="reward-note" id="rewardNote"></div>
+    <button class="cta-btn" onclick="startGame()">Run Again</button>
   </div>
 </div>
  
 <script>
-// ═══════════════════════════════════════════════════════
-//  TERRANOVA — Complete Game Engine
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  THE MASQUERADE PROTOCOL — Eclipse Tower Evidence Recovery
+//  Year 2089 · ORACLE System · Lumen Photography Reward
+// ═══════════════════════════════════════════════════════════════
+ 
+function showRules() {
+  document.getElementById('titleScreen').classList.add('hidden');
+  document.getElementById('rulesScreen').classList.add('visible');
+}
+ 
+function beginInvestigation() {
+  document.getElementById('rulesScreen').classList.remove('visible');
+  document.getElementById('rulesScreen').style.display = 'none';
+  startGame();
+}
  
 const COLS = 20, ROWS = 18, CELL = 32;
 const MAX_ROUNDS = 15;
  
-// Cell ownership constants
 const NONE = 0, P = 1, AI = 2, BLOCKED = 3, P_BASE = 4, AI_BASE = 5;
  
-// Base positions (single anchor cell)
+// Entry points: investigator enters from south-west, suspect from north-east
 const PLAYER_BASE = { r: ROWS - 2, c: 1 };
 const AI_BASE_POS = { r: 1,        c: COLS - 2 };
  
-// ── Double-point bonus tiles ─────────────────────────────
+// ── Critical Crime Scenes (×2 bonus tiles) ───────────────────────
+// Mapped to the Eclipse Tower gala floor: stage center, research display, north exit corridor
 const BONUS_TILE_COORDS = [
-  // Central cluster
+  // Center stage — where Adrian was killed
   [8,8],[8,9],[9,8],[9,9],
-  // Upper-centre band
+  // Research display area (east side of ballroom)
   [4,8],[4,9],[4,10],[5,8],[5,9],
-  // Lower-centre band
+  // ORACLE Operations corridor
   [12,10],[12,11],[13,10],[13,11],
-  // Left-centre corridor
+  // Investor lounge approach
   [7,5],[8,5],[9,5],
-  // Right-centre corridor
+  // North exit — where White received the warning note
   [7,13],[8,13],[9,13],
-  // Far flanks (high risk, high reward)
+  // Power control panel access
   [3,7],[3,8],[14,11],[14,12],
 ];
 let bonusSet = new Set();
@@ -379,39 +630,37 @@ function buildBonusSet() {
 }
 function isBonus(r, c) { return bonusSet.has(`${r},${c}`); }
  
-// ── Piece library ────────────────────────────────────────
+// ── Evidence Fragment Library ────────────────────────────────────
+// Named after evidence types from the Masquerade Protocol case
 const PIECE_DEFS = [
-  { name: 'MONOMINO', cells: [[0,0]] },
-  { name: 'DOMINO',   cells: [[0,0],[0,1]] },
-  { name: 'TRIO-I',   cells: [[0,0],[0,1],[0,2]] },
-  { name: 'TRIO-L',   cells: [[0,0],[1,0],[1,1]] },
-  { name: 'TETRO-I',  cells: [[0,0],[0,1],[0,2],[0,3]] },
-  { name: 'TETRO-L',  cells: [[0,0],[1,0],[2,0],[2,1]] },
-  { name: 'TETRO-T',  cells: [[0,1],[1,0],[1,1],[1,2]] },
-  { name: 'TETRO-S',  cells: [[0,1],[0,2],[1,0],[1,1]] },
-  { name: 'TETRO-O',  cells: [[0,0],[0,1],[1,0],[1,1]] },
-  { name: 'TETRO-J',  cells: [[0,1],[1,1],[2,0],[2,1]] },
-  { name: 'PENTO-F',  cells: [[0,1],[1,0],[1,1],[1,2],[2,2]] },
-  { name: 'PENTO-L',  cells: [[0,0],[1,0],[2,0],[3,0],[3,1]] },
-  { name: 'PENTO-P',  cells: [[0,0],[0,1],[1,0],[1,1],[2,0]] },
-  { name: 'PENTO-Y',  cells: [[0,1],[1,0],[1,1],[2,1],[3,1]] },
-  { name: 'PENTO-U',  cells: [[0,0],[0,2],[1,0],[1,1],[1,2]] },
-  { name: 'PENTO-X',  cells: [[0,1],[1,0],[1,1],[1,2],[2,1]] },
-  { name: 'HEXA-C',   cells: [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]] },
-  { name: 'HEXA-Z',   cells: [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]] },
+  { name: 'CALLING CARD',    cells: [[0,0]] },
+  { name: 'TORN NOTE',       cells: [[0,0],[0,1]] },
+  { name: 'MASK FRAGMENT',   cells: [[0,0],[0,1],[0,2]] },
+  { name: 'GLOVE PRINT',     cells: [[0,0],[1,0],[1,1]] },
+  { name: 'MEMORY LOG',      cells: [[0,0],[0,1],[0,2],[0,3]] },
+  { name: 'ORACLE TRACE',    cells: [[0,0],[1,0],[2,0],[2,1]] },
+  { name: 'DM THREAD',       cells: [[0,1],[1,0],[1,1],[1,2]] },
+  { name: 'EMAIL CHAIN',     cells: [[0,1],[0,2],[1,0],[1,1]] },
+  { name: 'PHOTO CONTACT',   cells: [[0,0],[0,1],[1,0],[1,1]] },
+  { name: 'SECURITY LOG',    cells: [[0,1],[1,1],[2,0],[2,1]] },
+  { name: 'VOICE MEMO',      cells: [[0,1],[1,0],[1,1],[1,2],[2,2]] },
+  { name: 'FLOOR PLAN',      cells: [[0,0],[1,0],[2,0],[3,0],[3,1]] },
+  { name: 'INCIDENT REPORT', cells: [[0,0],[0,1],[1,0],[1,1],[2,0]] },
+  { name: 'JOURNAL ENTRY',   cells: [[0,1],[1,0],[1,1],[2,1],[3,1]] },
+  { name: 'BACKUP FILE',     cells: [[0,0],[0,2],[1,0],[1,1],[1,2]] },
+  { name: 'CAMERA STILL',    cells: [[0,1],[1,0],[1,1],[1,2],[2,1]] },
+  { name: 'WIRE TRANSFER',   cells: [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]] },
+  { name: 'TRANSCRIPT',      cells: [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]] },
 ];
  
-// ── Game state ───────────────────────────────────────────
 let board, deck, playerHand, aiHand;
 let turn, selectedIdx, hoverCell, discardUsed, roundNumber;
  
-// ── Canvas setup ─────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
 canvas.width  = COLS * CELL;
 canvas.height = ROWS * CELL;
  
-// ── Piece rotation helpers ────────────────────────────────
 function rotateCW(cells) {
   const rot = cells.map(([r,c]) => [c, -r]);
   const minR = Math.min(...rot.map(x => x[0]));
@@ -429,7 +678,6 @@ function getPieceCells(piece) {
   return applyRotation(piece.cells, piece.rotation || 0);
 }
  
-// ── Deck & hand ──────────────────────────────────────────
 function createDeck() {
   const d = [];
   for (let i = 0; i < 4; i++) {
@@ -456,7 +704,6 @@ function dealHand(n = 5) {
   return h;
 }
  
-// ── Board helpers ────────────────────────────────────────
 function emptyBoard() {
   return Array.from({ length: ROWS }, () => new Uint8Array(COLS));
 }
@@ -465,37 +712,15 @@ function inBounds(r, c) { return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
  
 const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
  
-/**
- * Check whether placing `cells` at anchor (ar, ac) is valid for `owner`.
- * Rules:
- *  1. All cells must be in bounds and on NONE tiles.
- *  2. At least one cell must be orthogonally adjacent to an already-owned
- *     tile (own color or own base). On the FIRST placement for that owner
- *     the check is adjacency to the BASE tile specifically.
- */
 function canPlace(cells, ar, ac, owner) {
-  // Rule 1: bounds + empty
   for (const [dr, dc] of cells) {
     const r = ar + dr, c = ac + dc;
     if (!inBounds(r, c)) return false;
     if (board[r][c] !== NONE) return false;
   }
- 
-  // Rule 2: connectivity
   const friendlyOwner = owner === P ? P : AI;
   const friendlyBase  = owner === P ? P_BASE : AI_BASE;
- 
-  // Does the owner already have any territory?
-  const hasTerritory = (() => {
-    for (let r = 0; r < ROWS; r++)
-      for (let c = 0; c < COLS; c++)
-        if (board[r][c] === friendlyOwner) return true;
-    return false;
-  })();
- 
-  // Adjacent-to set: own tiles + own base always count
   const validNeighbors = new Set([friendlyOwner, friendlyBase]);
- 
   for (const [dr, dc] of cells) {
     const r = ar + dr, c = ac + dc;
     for (const [nr, nc] of DIRS.map(([a,b]) => [r+a, c+b])) {
@@ -503,20 +728,11 @@ function canPlace(cells, ar, ac, owner) {
       if (validNeighbors.has(board[nr][nc])) return true;
     }
   }
- 
   return false;
 }
  
 function placePiece(cells, ar, ac, owner) {
   cells.forEach(([dr, dc]) => { board[ar + dr][ac + dc] = owner; });
-}
- 
-function countOwned(owner) {
-  let n = 0;
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++)
-      if (board[r][c] === owner) n++;
-  return n;
 }
  
 function countEmpty() {
@@ -527,57 +743,42 @@ function countEmpty() {
   return n;
 }
  
-// ── Terrain ──────────────────────────────────────────────
+// ── Eclipse Tower Gala Floor Layout ─────────────────────────────
+// Blocked tiles represent walls, restricted corridors, and sealed rooms
 function addTerrain() {
   const obs = [
-    // ── Mountain spine (diagonal, centre-left) ──
+    // ORACLE Operations wall (west side)
     [2,4],[3,4],[3,5],[4,5],[4,6],[5,6],[5,7],[6,7],[6,8],
- 
-    // ── Northern lake (top-centre, creates two narrow passes) ──
+    // North exit restricted corridor
     [1,9],[1,10],[1,11],[2,9],[2,10],[2,11],[3,10],[3,11],
- 
-    // ── Central lake (largest obstacle, forces routing around) ──
+    // Main stage / center ballroom obstruction
     [7,9],[7,10],[7,11],[8,9],[8,10],[8,11],[8,12],
     [9,10],[9,11],[9,12],[10,10],[10,11],
- 
-    // ── Eastern canyon (long vertical wall, one gap at r5) ──
+    // East wall — Research Display partition
     [2,15],[3,15],[4,15],[6,15],[7,15],[8,15],
- 
-    // ── Southern forest (small cluster, mirrors AI-side rocky patch) ──
+    // South service corridor wall
     [13,3],[14,3],[14,4],[15,4],
- 
-    // ── Western wall spur (top-left quadrant divider) ──
+    // Security office partition (west)
     [4,2],[5,2],[5,3],[6,3],
- 
-    // ── Island outcrop (far right mid) ──
+    // Staff access hallway (far east)
     [5,17],[6,17],[7,17],[7,18],
- 
-    // ── Bottom-right mesa ──
+    // Private meeting rooms (bottom-right)
     [13,14],[13,15],[14,14],[14,15],[15,14],[15,15],
- 
-    // ── Horizontal chokepoint (mid-board, forces tight passage) ──
+    // Power control panel access corridor
     [9,4],[9,5],[9,6],[10,4],
- 
-    // ── Top-right rocky patch (safe distance from AI base) ──
+    // Top-right restricted zone
     [3,16],[3,17],[4,17],[4,18],
- 
-    // ── Bottom-centre divider ──
+    // South exit corridor
     [15,9],[15,10],[15,11],[16,9],[16,10],
- 
-    // ── Ruins (centre, zigzag corridor) ──
+    // Backstage / presentation prep area
     [10,7],[11,7],[11,8],[12,7],[12,8],[12,9],
- 
-    // ── Upper-right notch ──
+    // North exit upper seal
     [0,13],[0,14],[1,13],
- 
-    // ── Scattered boulders (single cells for texture) ──
+    // Structural pillars & scattered obstacles
     [4,12],[6,2],[10,14],[10,17],[12,17],[16,6],[16,15],[2,7],[6,12],[11,4],
   ];
- 
-  // Safety: never place within 1 cell of either base
   const tooClose = ([r, c]) =>
     [PLAYER_BASE, AI_BASE_POS].some(b => Math.abs(r - b.r) <= 1 && Math.abs(c - b.c) <= 1);
- 
   obs.filter(t => !tooClose(t)).forEach(([r, c]) => {
     if (inBounds(r, c)) board[r][c] = BLOCKED;
   });
@@ -586,25 +787,26 @@ function addTerrain() {
 function placeBases() {
   board[PLAYER_BASE.r][PLAYER_BASE.c] = P_BASE;
   board[AI_BASE_POS.r][AI_BASE_POS.c] = AI_BASE;
-  buildBonusSet(); // build after terrain so blocked tiles are excluded
+  buildBonusSet();
 }
  
-// ── Rendering ────────────────────────────────────────────
+// ── Rendering — Eclipse Tower Aesthetic ─────────────────────────
+// Investigator = cyan-blue  |  Suspect (concealing) = crimson
 const FILL = {
-  [NONE]:    '#1c2128',
-  [P]:       '#1a3a5c',
-  [AI]:      '#3d1a1a',
-  [BLOCKED]: '#2a2f3a',
-  [P_BASE]:  '#0d2a4a',
-  [AI_BASE]: '#3a0d0d',
+  [NONE]:    '#060b14',
+  [P]:       '#002840',
+  [AI]:      '#280008',
+  [BLOCKED]: '#0c1220',
+  [P_BASE]:  '#002040',
+  [AI_BASE]: '#200008',
 };
 const STROKE = {
-  [NONE]:    '#262d38',
-  [P]:       '#3b8eff',
-  [AI]:      '#e05252',
-  [BLOCKED]: '#383e48',
-  [P_BASE]:  '#5ab0ff',
-  [AI_BASE]: '#ff8080',
+  [NONE]:    '#0c1828',
+  [P]:       '#00c2ff',
+  [AI]:      '#cc2244',
+  [BLOCKED]: '#0e1830',
+  [P_BASE]:  '#40d8ff',
+  [AI_BASE]: '#e04060',
 };
  
 function drawBoard() {
@@ -616,80 +818,81 @@ function drawBoard() {
       const x = c * CELL, y = r * CELL;
       const bonus = isBonus(r, c);
  
-      // Cell background
+      // Cell fill
       if (bonus && v === NONE) {
-        // Unclaimed bonus tile — dark gold background
-        ctx.fillStyle = '#1a1600';
+        ctx.fillStyle = '#0a0620';
       } else {
-        ctx.fillStyle = FILL[v] || '#1c2128';
+        ctx.fillStyle = FILL[v] || '#060b14';
       }
       ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
  
       // Border
       if (bonus && v === NONE) {
-        // Neon yellow glow border
-        ctx.strokeStyle = '#e8ff00';
+        ctx.strokeStyle = '#7b4fff';
         ctx.lineWidth = 1.5;
-        ctx.shadowColor = '#e8ff00';
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#7b4fff';
+        ctx.shadowBlur = 8;
       } else {
-        ctx.strokeStyle = STROKE[v] || '#262d38';
+        ctx.strokeStyle = STROKE[v] || '#0c1828';
         ctx.lineWidth = (v === NONE) ? 0.5 : 1;
         ctx.shadowBlur = 0;
       }
       ctx.strokeRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1);
       ctx.shadowBlur = 0;
  
-      // Claimed bonus tile — overlay a subtle gold shimmer
+      // Claimed crime scene shimmer
       if (bonus && (v === P || v === AI)) {
-        ctx.fillStyle = v === P ? 'rgba(232,255,0,0.18)' : 'rgba(232,255,0,0.14)';
+        ctx.fillStyle = v === P ? 'rgba(123,79,255,0.22)' : 'rgba(123,79,255,0.14)';
         ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-        // Thin neon outline still visible
-        ctx.strokeStyle = 'rgba(232,255,0,0.55)';
+        ctx.strokeStyle = 'rgba(123,79,255,0.55)';
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 1.5, y + 1.5, CELL - 3, CELL - 3);
       }
  
-      // Terrain glyph
+      // Blocked tile — structural element
       if (v === BLOCKED) {
-        ctx.fillStyle = '#4a5060';
-        ctx.font = `${CELL * 0.42}px serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('▲', x + CELL / 2, y + CELL / 2 + 1);
+        ctx.fillStyle = '#0e1830';
+        ctx.fillRect(x + CELL*0.25, y + CELL*0.25, CELL*0.5, CELL*0.5);
+        ctx.strokeStyle = '#1a2840';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x + CELL*0.25, y + CELL*0.25, CELL*0.5, CELL*0.5);
       }
  
-      // Bonus ×2 label on unclaimed tiles
+      // Critical crime scene label
       if (bonus && v === NONE) {
-        ctx.fillStyle = '#e8ff00';
-        ctx.font = `bold 8px Share Tech Mono`;
+        ctx.fillStyle = '#7b4fff';
+        ctx.font = `bold 7px Share Tech Mono`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.shadowColor = '#e8ff00';
-        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#7b4fff';
+        ctx.shadowBlur = 5;
         ctx.fillText('×2', x + CELL / 2, y + CELL / 2);
         ctx.shadowBlur = 0;
       }
  
-      // Base markers
+      // Base markers — entry points
       if (v === P_BASE || v === AI_BASE) {
-        const col = v === P_BASE ? '#5ab0ff' : '#ff8080';
+        const col = v === P_BASE ? '#00c2ff' : '#cc2244';
         ctx.strokeStyle = col;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x + CELL/2, y + CELL/2, CELL * 0.36, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 10;
+        ctx.strokeRect(x + 4, y + 4, CELL - 8, CELL - 8);
+        ctx.shadowBlur = 0;
+        // Inner dot
         ctx.fillStyle = col;
         ctx.beginPath();
-        ctx.arc(x + CELL/2, y + CELL/2, CELL * 0.14, 0, Math.PI * 2);
+        ctx.arc(x + CELL/2, y + CELL/2, CELL * 0.1, 0, Math.PI * 2);
         ctx.fill();
+        // Label below
         ctx.fillStyle = col;
-        ctx.font = `bold 7px Share Tech Mono`;
+        ctx.font = `bold 5.5px Share Tech Mono`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(v === P_BASE ? 'YOU' : 'AI', x + CELL/2, y + CELL/2 + CELL * 0.42);
+        ctx.fillText(v === P_BASE ? 'INSP' : 'SUSP', x + CELL/2, y + CELL * 0.82);
       }
     }
   }
  
-  // Ghost preview on hover
+  // Ghost placement preview
   if (turn === 'player' && selectedIdx !== null && hoverCell) {
     const piece = playerHand[selectedIdx];
     if (piece) {
@@ -701,31 +904,23 @@ function drawBoard() {
         if (!inBounds(r2, c2)) return;
         const onBonus = isBonus(r2, c2);
         if (onBonus && valid) {
-          ctx.fillStyle = 'rgba(232,255,0,0.28)';
-          ctx.shadowColor = '#e8ff00'; ctx.shadowBlur = 8;
+          ctx.fillStyle = 'rgba(123,79,255,0.35)';
+          ctx.shadowColor = '#7b4fff'; ctx.shadowBlur = 10;
         } else {
-          ctx.fillStyle = valid ? 'rgba(59,142,255,0.38)' : 'rgba(224,82,82,0.28)';
+          ctx.fillStyle = valid ? 'rgba(0,194,255,0.2)' : 'rgba(204,34,68,0.2)';
           ctx.shadowBlur = 0;
         }
         ctx.fillRect(c2 * CELL + 1, r2 * CELL + 1, CELL - 2, CELL - 2);
-        ctx.strokeStyle = onBonus && valid ? '#e8ff00' : (valid ? '#3b8eff' : '#e05252');
+        ctx.strokeStyle = onBonus && valid ? '#7b4fff' : (valid ? '#00c2ff' : '#cc2244');
         ctx.lineWidth = 1.5;
         ctx.strokeRect(c2 * CELL + 0.5, r2 * CELL + 0.5, CELL - 1, CELL - 1);
         ctx.shadowBlur = 0;
       });
     }
   }
- 
-  // Subtle coordinate hints
-  ctx.fillStyle = 'rgba(139,148,158,0.08)';
-  ctx.font = '7px Share Tech Mono';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (let r = 0; r < ROWS; r += 4)
-    for (let c = 0; c < COLS; c += 4)
-      ctx.fillText(`${c},${r}`, c * CELL + CELL / 2, r * CELL + 2);
 }
  
-// ── Hand UI ──────────────────────────────────────────────
+// ── Hand UI ──────────────────────────────────────────────────────
 function renderHandCards() {
   const el = document.getElementById('playerHand');
   el.innerHTML = '';
@@ -745,10 +940,10 @@ function renderHandCards() {
     cv.style.height = cv.height + 'px';
     const cx = cv.getContext('2d');
     cells.forEach(([r, c]) => {
-      cx.fillStyle = '#3b8eff';
+      cx.fillStyle = '#002840';
       cx.fillRect(c * S + 1, r * S + 1, S - 2, S - 2);
-      cx.strokeStyle = '#6eb0ff';
-      cx.lineWidth = 0.5;
+      cx.strokeStyle = '#00c2ff';
+      cx.lineWidth = 1;
       cx.strokeRect(c * S + 0.5, r * S + 0.5, S - 1, S - 1);
     });
  
@@ -762,14 +957,14 @@ function renderHandCards() {
   });
 }
  
-// ── Player actions ───────────────────────────────────────
+// ── Player actions ────────────────────────────────────────────────
 function selectPiece(idx) {
   if (turn !== 'player') return;
   selectedIdx = (selectedIdx === idx) ? null : idx;
   renderHandCards();
   setMsg(selectedIdx !== null
-    ? `[${playerHand[selectedIdx].name}] selected — click your territory to place.`
-    : 'Select a piece from your hand.', 'info');
+    ? `[${playerHand[selectedIdx].name}] selected — click the floor plan to recover evidence.`
+    : 'Select an evidence fragment from your hand.', 'info');
 }
  
 function rotateSelected() {
@@ -777,7 +972,7 @@ function rotateSelected() {
   playerHand[selectedIdx].rotation = ((playerHand[selectedIdx].rotation || 0) + 1) % 4;
   renderHandCards();
   drawBoard();
-  setMsg('Piece rotated.', 'ok');
+  setMsg('Fragment rotated.', 'ok');
 }
  
 function discardSelected() {
@@ -791,16 +986,16 @@ function discardSelected() {
   renderHandCards();
   drawBoard();
   updateHUD();
-  setMsg('Piece discarded — drew a new card.', 'ok');
+  setMsg('Fragment exchanged — new evidence drawn from the archive.', 'ok');
 }
  
 function passTurn() {
   if (turn !== 'player') return;
-  logAI('[PLAYER] Passed turn.');
+  logAI('[INSP] Investigator held their position.');
   endPlayerTurn();
 }
  
-// ── Mouse events ─────────────────────────────────────────
+// ── Mouse events ──────────────────────────────────────────────────
 canvas.addEventListener('mousemove', e => {
   if (turn !== 'player' || selectedIdx === null) { hoverCell = null; drawBoard(); return; }
   const rect = canvas.getBoundingClientRect();
@@ -819,7 +1014,7 @@ canvas.addEventListener('click', e => {
   const cells = getPieceCells(piece);
  
   if (!canPlace(cells, ar, ac, P)) {
-    setMsg('Invalid — must connect to your territory (blue tiles / base).', 'err');
+    setMsg('Invalid — must connect to your recovered sector.', 'err');
     shakeCanvas();
     return;
   }
@@ -832,7 +1027,7 @@ canvas.addEventListener('click', e => {
  
   drawBoard();
   updateHUD();
-  setMsg('Placed! AI is thinking…', 'ok');
+  setMsg('Evidence secured. Suspect is concealing…', 'ok');
   endPlayerTurn();
 });
  
@@ -841,15 +1036,14 @@ function endPlayerTurn() {
   selectedIdx = null;
   discardUsed = false;
   document.getElementById('discardBtn').disabled = false;
-  document.getElementById('turnBadge').textContent = 'MACHINE TURN';
+  document.getElementById('turnBadge').textContent = 'SUSPECT MOVING';
   document.getElementById('turnBadge').className = 'turn-badge ai-turn';
   renderHandCards();
   drawBoard();
   setTimeout(aiTurn, 800);
 }
  
-// ── HUD ──────────────────────────────────────────────────
-// Score = regular tiles + 2× bonus tiles (base tile counts as 1)
+// ── HUD ───────────────────────────────────────────────────────────
 function calcScore(owner) {
   let score = 0;
   const baseOwner = owner === P ? P_BASE : AI_BASE;
@@ -886,9 +1080,9 @@ function logAI(text) {
   const entry = document.createElement('div');
   entry.className = 'entry';
   entry.innerHTML = text
-    .replace('[PLAYER]', '<span class="label">[PLAYER]</span>')
-    .replace('[AI]',     '<span class="label">[AI]</span>')
-    .replace('[SYS]',    '<span class="label">[SYS]</span>');
+    .replace('[ORACLE]', '<span class="label-oracle">[ORACLE]</span>')
+    .replace('[SUSP]',   '<span class="label-suspect">[SUSP]</span>')
+    .replace('[INSP]',   '<span class="label-insp">[INSP]</span>');
   log.insertBefore(entry, log.firstChild);
   while (log.children.length > 8) log.removeChild(log.lastChild);
 }
@@ -901,51 +1095,22 @@ function shakeCanvas() {
   setTimeout(() => { canvas.style.transform = ''; }, 300);
 }
  
-// ── AI System ────────────────────────────────────────────
-// ── AI scoring helpers ────────────────────────────────────
- 
-// Count how many NONE tiles are orthogonally reachable from a set of placed cells
-// (immediate frontier — how much new space this placement opens up)
+// ── AI Engine ─────────────────────────────────────────────────────
 function countFrontier(placedCells) {
-  const seen = new Set();
-  let frontier = 0;
+  const seen = new Set(); let frontier = 0;
   placedCells.forEach(([r, c]) => {
     DIRS.forEach(([dr, dc]) => {
       const nr = r + dr, nc = c + dc;
       const key = nr * 100 + nc;
       if (!seen.has(key) && inBounds(nr, nc) && board[nr][nc] === NONE) {
-        seen.add(key);
-        frontier++;
+        seen.add(key); frontier++;
       }
     });
   });
   return frontier;
 }
  
-// Count how many NONE tiles border the player's territory (player's frontier)
-// Used to estimate how much space the player can still expand into
-function playerFrontierSize() {
-  const seen = new Set();
-  let n = 0;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (board[r][c] !== P && board[r][c] !== P_BASE) continue;
-      DIRS.forEach(([dr, dc]) => {
-        const nr = r + dr, nc = c + dc;
-        const key = nr * 100 + nc;
-        if (!seen.has(key) && inBounds(nr, nc) && board[nr][nc] === NONE) {
-          seen.add(key); n++;
-        }
-      });
-    }
-  }
-  return n;
-}
- 
-// Does placing these cells wall off / reduce the player's frontier?
-// Returns how many player-frontier NONE tiles become blocked by adjacency to the new piece
 function countChokeValue(placedCells) {
-  // Tiles adjacent to the placed piece
   const adjacentNone = new Set();
   placedCells.forEach(([r, c]) => {
     DIRS.forEach(([dr, dc]) => {
@@ -953,8 +1118,6 @@ function countChokeValue(placedCells) {
       if (inBounds(nr, nc) && board[nr][nc] === NONE) adjacentNone.add(nr * 100 + nc);
     });
   });
- 
-  // Of those, how many were also adjacent to the player's territory?
   let choke = 0;
   adjacentNone.forEach(key => {
     const nr = Math.floor(key / 100), nc = key % 100;
@@ -969,51 +1132,31 @@ function countChokeValue(placedCells) {
 function scoreAIPlacement(cells, ar, ac) {
   const placed = cells.map(([dr, dc]) => [ar + dr, ac + dc]);
   const tileCount = placed.length;
-  const roundProgress = roundNumber / MAX_ROUNDS; // 0→1 across the game
- 
-  // ── 1. Raw tile count (always valuable) ──
+  const roundProgress = roundNumber / MAX_ROUNDS;
   let score = tileCount * 3.0;
- 
-  // ── 2. Adjacency bonuses ──
   placed.forEach(([r, c]) => {
     DIRS.forEach(([dr, dc]) => {
       const nr = r + dr, nc = c + dc;
       if (!inBounds(nr, nc)) return;
       const v = board[nr][nc];
-      // Cohesion: stay connected, don't fragment
       if (v === AI || v === AI_BASE) score += 1.2;
-      // Blocking: scale UP as game progresses (early = expand, late = deny)
-      if (v === P || v === P_BASE) score += 2.5 + roundProgress * 4.0;
+      if (v === P  || v === P_BASE)  score += 2.5 + roundProgress * 4.0;
     });
-    // Edge penalty — corners are dead ends
     if (r === 0 || r === ROWS - 1 || c === 0 || c === COLS - 1) score -= 1.0;
   });
- 
-  // ── 3. Expansion potential — how many new frontier tiles does this open? ──
-  // Simulate placing the piece temporarily to measure future access
-  placed.forEach(([r, c]) => { board[r][c] = AI; }); // temp place
+  placed.forEach(([r, c]) => { board[r][c] = AI; });
   const frontier = countFrontier(placed);
-  placed.forEach(([r, c]) => { board[r][c] = NONE; }); // undo
-  // Early game: expansion is critical. Late game: less so.
+  placed.forEach(([r, c]) => { board[r][c] = NONE; });
   score += frontier * (1.8 - roundProgress * 1.2);
- 
-  // ── 4. Chokepoint value — does this cut into the player's frontier? ──
   const choke = countChokeValue(placed);
-  // Choking matters more as game goes on
   score += choke * (1.0 + roundProgress * 3.5);
- 
-  // ── 5. Larger pieces are inherently better (tile efficiency) ──
   score += tileCount * 0.5;
- 
-  // ── 6. Bonus tile value — landing on ×2 tiles is worth extra ──
   placed.forEach(([r, c]) => {
     if (isBonus(r, c)) score += 4.0 + roundProgress * 2.0;
   });
- 
   return score;
 }
  
-// Returns the best {r,c,cells,score} placement for a given piece, or null
 function findBestAIMove(piece) {
   let best = null, bestScore = -Infinity;
   for (let rot = 0; rot < 4; rot++) {
@@ -1031,26 +1174,19 @@ function findBestAIMove(piece) {
  
 function aiTurn() {
   if (turn !== 'ai') return;
- 
   const roundProgress = roundNumber / MAX_ROUNDS;
  
-  // Evaluate every piece in hand — find best move per piece
   let candidates = aiHand.map((piece, idx) => ({
     idx, piece, move: findBestAIMove(piece),
   })).filter(c => c.move !== null);
   candidates.sort((a, b) => b.move.score - a.move.score);
  
-  // ── Smart discard logic ─────────────────────────────────────────
-  // Discard threshold rises early game (be picky) and drops late game
-  // (any move is better than none on a tight board).
   const DISCARD_THRESHOLD = 6.0 - roundProgress * 3.5;
- 
   const unplaceableIdx = aiHand.findIndex(piece => findBestAIMove(piece) === null);
   let discardIdx = unplaceableIdx;
  
   if (discardIdx === -1 && deck.length > 3 && candidates.length > 1) {
     const worst = candidates[candidates.length - 1];
-    // Only discard if weak AND the piece is small (Monomino/Domino not worth discarding late)
     const worstSize = getPieceCells(worst.piece).length;
     if (worst.move.score < DISCARD_THRESHOLD && worstSize <= 3) {
       discardIdx = worst.idx;
@@ -1058,60 +1194,48 @@ function aiTurn() {
   }
  
   if (discardIdx !== -1 && deck.length > 0) {
-    // ── Discard path ──
     const discardedPiece = aiHand[discardIdx];
     const oldWorstScore = candidates.find(c => c.idx === discardIdx)?.move?.score ?? 0;
     aiHand.splice(discardIdx, 1);
     const fresh = drawCard();
     aiHand.push(fresh);
- 
     const freshMove = findBestAIMove(fresh);
     const newScore  = freshMove ? freshMove.score : 0;
- 
-    // Re-evaluate the full hand after drawing
     candidates = aiHand.map((piece, idx) => ({
       idx, piece, move: findBestAIMove(piece),
     })).filter(c => c.move !== null).sort((a, b) => b.move.score - a.move.score);
  
-    if (newScore > oldWorstScore || unplaceableIdx !== -1) {
-      logAI(`[AI] Discarded ${discardedPiece.name} · drew ${fresh.name} (↑${newScore.toFixed(1)})`);
-    } else {
-      logAI(`[AI] Swapped ${discardedPiece.name} → ${fresh.name} (hand refresh)`);
-    }
+    logAI(`[SUSP] Concealed ${discardedPiece.name} · retrieved ${fresh.name}`);
  
     if (candidates.length > 0) {
       const chosen = candidates[0];
       placePiece(chosen.move.cells, chosen.move.r, chosen.move.c, AI);
       aiHand.splice(chosen.idx, 1);
       const next = drawCard(); if (next) aiHand.push(next);
-      logAI(`[AI] Played ${chosen.piece.name} → (${chosen.move.c},${chosen.move.r}) · ${chosen.move.score.toFixed(1)}`);
+      logAI(`[ORACLE] Suspect placed ${chosen.piece.name} at sector (${chosen.move.c},${chosen.move.r})`);
     } else {
-      logAI(`[AI] Drew ${fresh.name} — no valid move yet.`);
+      logAI(`[ORACLE] Suspect drew ${fresh.name} — no valid placement.`);
     }
  
   } else if (candidates.length > 0) {
-    // ── Normal best-move play ──
     const chosen = candidates[0];
     placePiece(chosen.move.cells, chosen.move.r, chosen.move.c, AI);
     aiHand.splice(chosen.idx, 1);
     const fresh = drawCard(); if (fresh) aiHand.push(fresh);
-    logAI(`[AI] Played ${chosen.piece.name} → (${chosen.move.c},${chosen.move.r}) · ${chosen.move.score.toFixed(1)}`);
+    logAI(`[SUSP] Concealed ${chosen.piece.name} at (${chosen.move.c},${chosen.move.r})`);
  
   } else {
-    // ── Truly stuck ──
     const largestIdx = aiHand.reduce((bi, p, i) =>
       getPieceCells(p).length > getPieceCells(aiHand[bi]).length ? i : bi, 0);
     const discarded = aiHand.splice(largestIdx, 1)[0];
     const fresh = drawCard();
-    if (fresh) { aiHand.push(fresh); logAI(`[AI] Stuck. Discarded ${discarded.name}, drew ${fresh.name}.`); }
-    else        { logAI(`[AI] No moves, deck empty. Passing.`); }
+    if (fresh) { aiHand.push(fresh); logAI(`[SUSP] Destroyed ${discarded.name} · no moves.`); }
+    else        { logAI(`[ORACLE] Suspect has no moves. Deck exhausted.`); }
   }
  
   drawBoard();
   updateHUD();
  
-  // ── Round tracking ──
-  // Both players have now taken their turn — increment round
   roundNumber++;
   updateHUD();
  
@@ -1121,36 +1245,61 @@ function aiTurn() {
   }
  
   turn = 'player';
-  document.getElementById('turnBadge').textContent = 'YOUR TURN';
+  document.getElementById('turnBadge').textContent = 'INVESTIGATOR';
   document.getElementById('turnBadge').className = 'turn-badge player-turn';
   renderHandCards();
-  setMsg(`Round ${roundNumber} — select a piece and place it.`, '');
+  setMsg(`Round ${roundNumber} — select a fragment and recover evidence from the floor.`, '');
 }
  
-// ── End game ─────────────────────────────────────────────
+// ── End Game ──────────────────────────────────────────────────────
 function endGame() {
   const sp = calcScore(P), sa = calcScore(AI);
   const win = sp > sa;
  
   document.getElementById('endScoreP').textContent = sp;
   document.getElementById('endScoreA').textContent = sa;
-  document.getElementById('endTitle').textContent =
-    win ? 'VICTORY' : sp === sa ? 'STALEMATE' : 'DEFEATED';
-  document.getElementById('endTitle').style.color =
-    win ? 'var(--player)' : sp === sa ? 'var(--accent)' : 'var(--ai)';
-  document.getElementById('endSubtitle').textContent = win
-    ? `You scored ${sp} pts vs Machine's ${sa}. Territory secured after ${MAX_ROUNDS} rounds.`
-    : sp === sa
-    ? `Dead even at ${sp} pts each after ${MAX_ROUNDS} rounds.`
-    : `Machine dominated — ${sa} pts vs your ${sp} after ${MAX_ROUNDS} rounds.`;
+ 
+  if (win) {
+    document.getElementById('endTitle').textContent = 'EVIDENCE RECOVERED';
+    document.getElementById('endTitle').style.color = 'var(--player)';
+    document.getElementById('endSubtitle').textContent =
+      `You secured ${sp} pts vs the suspect's ${sa}. The ORACLE archive is yours.`;
+    document.getElementById('rewardNote').innerHTML =
+      `<strong>🎞 LUMEN PHOTOGRAPHY · CONTACT SHEET UNLOCKED</strong><br><br>
+      Photographer <span class="highlight">L. Mercer</span> hands you the contact sheet from the Eclipse Tower Gala.<br><br>
+      Six timestamped stills. Four of them matter:<br>
+      · <span class="highlight">6:50 PM</span> — Pink on a private call.<br>
+      · <span class="highlight">6:55 PM</span> — Green approaches Pink near center stage.<br>
+      · <span class="highlight">7:00 PM</span> — Adrian leaving the ballroom with someone in a <span class="highlight">Red mask</span>.<br>
+      · <span class="highlight">7:15 PM</span> — Adrian at the podium, scanning the crowd.<br><br>
+      Present this contact sheet to the investigation table as <strong>verified evidence</strong>.`;
+  } else if (sp === sa) {
+    document.getElementById('endTitle').textContent = 'STALEMATE';
+    document.getElementById('endTitle').style.color = 'var(--oracle)';
+    document.getElementById('endSubtitle').textContent =
+      `Dead even at ${sp} pts each after ${MAX_ROUNDS} rounds. The Protocol remains unstable.`;
+    document.getElementById('rewardNote').innerHTML =
+      `<strong>⚠ INCONCLUSIVE · ORACLE SYSTEM</strong><br><br>
+      The evidence is split evenly. The contact sheet remains locked in the archive.<br>
+      The Continuum Protocol cannot reconstruct the truth from incomplete data.<br>
+      <span class="highlight">Run the recovery again</span> to unlock the photographer's files.`;
+  } else {
+    document.getElementById('endTitle').textContent = 'EVIDENCE CONCEALED';
+    document.getElementById('endTitle').style.color = 'var(--red)';
+    document.getElementById('endSubtitle').textContent =
+      `The suspect secured ${sa} pts vs your ${sp}. Key evidence has been buried.`;
+    document.getElementById('rewardNote').innerHTML =
+      `<strong>✗ ACCESS DENIED · LUMEN ARCHIVE</strong><br><br>
+      The contact sheet was intercepted before retrieval. The photographer's six images — including the <span class="highlight">7:00 PM photo of Red mask and Adrian</span> — remain concealed.<br><br>
+      Someone is still covering the truth. <span class="highlight">Run the recovery again</span> to try to break through.`;
+  }
  
   document.getElementById('endOverlay').classList.add('active');
   turn = 'over';
 }
  
-// ── Init ─────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────
 function startGame() {
-  document.getElementById('startOverlay').classList.remove('active');
   document.getElementById('endOverlay').classList.remove('active');
  
   board       = emptyBoard();
@@ -1168,20 +1317,16 @@ function startGame() {
   roundNumber = 1;
  
   document.getElementById('discardBtn').disabled = false;
-  document.getElementById('turnBadge').textContent  = 'YOUR TURN';
+  document.getElementById('turnBadge').textContent  = 'INVESTIGATOR';
   document.getElementById('turnBadge').className    = 'turn-badge player-turn';
   document.getElementById('aiLog').innerHTML =
-    '<div class="entry"><span class="label">[SYS] </span>Engagement begun. Dominate the territory.</div>';
+    '<div class="entry"><span class="label-oracle">[ORACLE] </span>Eclipse Tower recovery online. Secure the evidence.</div>';
  
   renderHandCards();
   drawBoard();
   updateHUD();
-  setMsg('Round 1 — select a piece. Your first piece must touch your blue base.', 'info');
+  setMsg('Round 1 — select a fragment. Your first piece must touch your entry sector.', 'info');
 }
- 
-// Boot
-startGame();
 </script>
 </body>
 </html>
- 
