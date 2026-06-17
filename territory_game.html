@@ -391,9 +391,15 @@
     text-align: center;
     max-width: 520px;
     width: 92%;
+    max-height: 92vh;
+    overflow-y: auto;
     animation: popIn 0.3s ease;
     position: relative;
     box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(123,79,255,0.1);
+  }
+  .modal.modal-wide {
+    max-width: 860px;
+    width: 95%;
   }
   .modal::before {
     content: '';
@@ -401,6 +407,25 @@
     inset: 5px;
     border: 1px solid rgba(0,194,255,0.08);
     pointer-events: none;
+  }
+ 
+  /* ── Photographer contact sheet image ── */
+  .photo-reveal {
+    margin: 20px 0 24px;
+    border: 1px solid var(--oracle);
+    box-shadow: 0 0 30px rgba(123,79,255,0.25), 0 0 60px rgba(0,0,0,0.6);
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .photo-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--oracle);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    opacity: 0.8;
   }
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.9) translateY(10px); }
@@ -561,7 +586,7 @@
  
 <!-- End overlay -->
 <div class="overlay" id="endOverlay">
-  <div class="modal">
+  <div class="modal" id="endModal">
     <div class="m-title" id="endTitle">CASE CLOSED</div>
     <div class="m-sub" id="endSubtitle"></div>
     <div class="result-row">
@@ -573,6 +598,11 @@
         <div class="res-score" style="color:var(--ai)" id="endScoreA">0</div>
         <div class="res-label">CONCEALED</div>
       </div>
+    </div>
+    <!-- Victory-only: photographer contact sheet -->
+    <div id="photoRevealWrap" style="display:none;">
+      <div class="photo-label">🎞 Lumen Photography · Gala Contact Sheet · Recovered</div>
+      <img id="photoRevealImg" src="Lumen_Photograph.png" alt="Photographer's Contact Sheet — Eclipse Tower Gala" class="photo-reveal" />
     </div>
     <div class="reward-note" id="rewardNote"></div>
     <button class="cta-btn" onclick="startGame()">Run Again</button>
@@ -1259,7 +1289,12 @@ function endGame() {
   document.getElementById('endScoreP').textContent = sp;
   document.getElementById('endScoreA').textContent = sa;
  
+  const modal = document.getElementById('endModal');
+  const photoWrap = document.getElementById('photoRevealWrap');
+ 
   if (win) {
+    modal.classList.add('modal-wide');
+    photoWrap.style.display = 'block';
     document.getElementById('endTitle').textContent = 'EVIDENCE RECOVERED';
     document.getElementById('endTitle').style.color = 'var(--player)';
     document.getElementById('endSubtitle').textContent =
@@ -1267,13 +1302,10 @@ function endGame() {
     document.getElementById('rewardNote').innerHTML =
       `<strong>🎞 LUMEN PHOTOGRAPHY · CONTACT SHEET UNLOCKED</strong><br><br>
       Photographer <span class="highlight">L. Mercer</span> hands you the contact sheet from the Eclipse Tower Gala.<br><br>
-      Six timestamped stills. Four of them matter:<br>
-      · <span class="highlight">6:50 PM</span> — Pink on a private call.<br>
-      · <span class="highlight">6:55 PM</span> — Green approaches Pink near center stage.<br>
-      · <span class="highlight">7:00 PM</span> — Adrian leaving the ballroom with someone in a <span class="highlight">Red mask</span>.<br>
-      · <span class="highlight">7:15 PM</span> — Adrian at the podium, scanning the crowd.<br><br>
       Present this contact sheet to the investigation table as <strong>verified evidence</strong>.`;
   } else if (sp === sa) {
+    modal.classList.remove('modal-wide');
+    photoWrap.style.display = 'none';
     document.getElementById('endTitle').textContent = 'STALEMATE';
     document.getElementById('endTitle').style.color = 'var(--oracle)';
     document.getElementById('endSubtitle').textContent =
