@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ORACLE Security — Ballroom Camera A</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+ 
+  :root {
+    --bg:        #04080f;
+    --surface:   #080e1a;
+    --border:    #0e1e35;
+    --dim:       #0c1525;
+    --player:    #00c2ff;
+    --glow:      rgba(0,194,255,0.4);
+    --oracle:    #7b4fff;
+    --oracle-g:  rgba(123,79,255,0.45);
+    --red:       #cc2244;
+    --red-g:     rgba(204,34,68,0.4);
+    --muted:     #3a5a7a;
+    --text:      #c8ddf0;
+    --mono:      'Share Tech Mono', monospace;
+    --display:   'Orbitron', sans-serif;
+    --sans:      'Rajdhani', sans-serif;
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+ 
+  html, body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+ 
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+ 
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,194,255,0.012) 2px, rgba(0,194,255,0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+ 
+  /* Ambient glow */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(123,79,255,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse at 80% 10%, rgba(0,194,255,0.05) 0%, transparent 45%);
+    pointer-events: none;
+  }
+ 
+  /* ═══════════════════════════════════
+     SCREENS
+  ═══════════════════════════════════ */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.97);
+  }
+ 
+  /* ═══════════════════════════════════
+     TITLE SCREEN
+  ═══════════════════════════════════ */
+  .oracle-icon {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: var(--oracle);
+    text-shadow: 0 0 40px var(--oracle-g);
+    margin-bottom: 16px;
+    animation: pulse 3s ease-in-out infinite alternate;
+  }
+  @keyframes pulse {
+    from { opacity: 0.6; text-shadow: 0 0 20px var(--oracle-g); }
+    to   { opacity: 1;   text-shadow: 0 0 60px var(--oracle-g), 0 0 100px rgba(123,79,255,0.2); }
+  }
+ 
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: clamp(0.48rem, 2vw, 0.6rem);
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+ 
+  .title-main {
+    font-family: var(--display);
+    font-size: clamp(1.3rem, 6vw, 2.4rem);
+    font-weight: 900;
+    color: var(--player);
+    letter-spacing: 0.08em;
+    text-align: center;
+    line-height: 1.15;
+    text-shadow: 0 0 30px var(--glow);
+    margin-bottom: 6px;
+  }
+ 
+  .title-sub {
+    font-family: var(--display);
+    font-size: clamp(0.55rem, 2vw, 0.72rem);
+    font-weight: 400;
+    color: var(--oracle);
+    letter-spacing: 0.22em;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+ 
+  .divider {
+    width: min(280px, 80vw);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--oracle), var(--player), var(--oracle), transparent);
+    opacity: 0.35;
+    margin-bottom: 24px;
+  }
+ 
+  .info-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .info-block::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0,194,255,0.06);
+    pointer-events: none;
+  }
+  .info-block p {
+    font-family: var(--sans);
+    font-size: clamp(0.82rem, 3.5vw, 0.9rem);
+    color: var(--muted);
+    line-height: 1.8;
+    text-align: center;
+    font-weight: 400;
+  }
+  .info-block p strong { color: var(--player); font-weight: 600; }
+ 
+  .proceed-btn {
+    background: transparent;
+    border: 1px solid var(--player);
+    color: var(--player);
+    font-family: var(--display);
+    font-size: clamp(0.65rem, 3vw, 0.78rem);
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    padding: 15px 44px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-transform: uppercase;
+    box-shadow: 0 0 16px rgba(0,194,255,0.08);
+    /* Minimum touch target */
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+  }
+  .proceed-btn:active {
+    background: rgba(0,194,255,0.1);
+    box-shadow: 0 0 32px rgba(0,194,255,0.25);
+  }
+ 
+  /* ═══════════════════════════════════
+     KEYPAD SCREEN
+  ═══════════════════════════════════ */
+  .keypad-shell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: clamp(20px, 5vw, 36px) clamp(18px, 6vw, 40px) clamp(22px, 5vw, 40px);
+    width: 100%;
+    max-width: 380px;
+    position: relative;
+    box-shadow: 0 0 80px rgba(0,0,0,0.7), 0 0 40px rgba(123,79,255,0.06);
+  }
+  .keypad-shell::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(0,194,255,0.07);
+    pointer-events: none;
+  }
+ 
+  .cam-label {
+    font-family: var(--mono);
+    font-size: clamp(0.48rem, 1.8vw, 0.58rem);
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+ 
+  .keypad-title {
+    font-family: var(--display);
+    font-size: clamp(0.85rem, 3.5vw, 1.1rem);
+    font-weight: 700;
+    color: var(--player);
+    text-align: center;
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 20px var(--glow);
+    margin-bottom: clamp(18px, 4vw, 28px);
+  }
+ 
+  /* Code display */
+  .code-display {
+    display: flex;
+    justify-content: center;
+    gap: clamp(8px, 3vw, 12px);
+    margin-bottom: 8px;
+  }
+  .digit-box {
+    width: clamp(44px, 13vw, 56px);
+    height: clamp(56px, 16vw, 68px);
+    background: var(--dim);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: clamp(1.6rem, 6vw, 2rem);
+    color: var(--player);
+    text-shadow: 0 0 14px var(--glow);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .digit-box.active {
+    border-color: var(--player);
+    box-shadow: 0 0 16px rgba(0,194,255,0.25);
+  }
+  .digit-box.active::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 2px;
+    background: var(--player);
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .digit-box.filled { border-color: rgba(0,194,255,0.3); }
+  .digit-box.error {
+    border-color: var(--red);
+    color: var(--red);
+    text-shadow: 0 0 14px var(--red-g);
+    box-shadow: 0 0 16px var(--red-g);
+    animation: shake 0.35s ease;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+ 
+  .status-msg {
+    font-family: var(--mono);
+    font-size: clamp(0.52rem, 2vw, 0.6rem);
+    letter-spacing: 0.12em;
+    text-align: center;
+    height: 18px;
+    margin-bottom: clamp(16px, 4vw, 24px);
+    transition: color 0.2s;
+  }
+  .status-msg.err  { color: var(--red); }
+  .status-msg.ok   { color: #00e5a0; }
+  .status-msg.idle { color: var(--muted); }
+ 
+  /* Keypad grid — big tap targets for mobile */
+  .keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(7px, 2.5vw, 10px);
+  }
+  .key {
+    background: var(--dim);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: clamp(1rem, 4vw, 1.15rem);
+    /* Tall enough to tap comfortably */
+    padding: clamp(16px, 5vw, 20px) 0;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    text-align: center;
+    user-select: none;
+    border-radius: 0;
+  }
+  .key:active  { background: rgba(0,194,255,0.14); border-color: var(--player); color: var(--player); }
+  .key.del     { color: var(--muted); font-size: clamp(0.62rem, 2.5vw, 0.75rem); letter-spacing: 0.08em; }
+  .key.del:active { background: rgba(204,34,68,0.1); border-color: var(--red); color: var(--red); }
+  .key.zero    { grid-column: 2; }
+  .key.enter   {
+    grid-column: 1 / -1;
+    color: var(--player);
+    font-family: var(--display);
+    font-size: clamp(0.65rem, 2.8vw, 0.78rem);
+    letter-spacing: 0.22em;
+    padding: clamp(14px, 4vw, 16px) 0;
+    border-color: rgba(0,194,255,0.3);
+  }
+  .key.enter:active { background: rgba(0,194,255,0.1); box-shadow: 0 0 20px rgba(0,194,255,0.2); }
+ 
+  /* ═══════════════════════════════════
+     EVIDENCE SCREEN
+  ═══════════════════════════════════ */
+  #evidenceScreen {
+    justify-content: flex-start;
+    padding-top: 24px;
+    padding-bottom: 40px;
+  }
+ 
+  .evidence-shell {
+    width: 100%;
+    max-width: 680px;
+  }
+ 
+  .ev-header {
+    border: 1px solid var(--player);
+    background: var(--surface);
+    padding: clamp(14px, 4vw, 20px) clamp(16px, 5vw, 28px);
+    margin-bottom: 2px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,194,255,0.06);
+  }
+  .ev-header::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0,194,255,0.08);
+    pointer-events: none;
+  }
+ 
+  .ev-badge {
+    font-family: var(--mono);
+    font-size: clamp(0.48rem, 1.8vw, 0.56rem);
+    letter-spacing: 0.2em;
+    color: var(--oracle);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ev-badge::before, .ev-badge::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--oracle));
+    opacity: 0.3;
+  }
+  .ev-badge::after { background: linear-gradient(90deg, var(--oracle), transparent); }
+ 
+  .ev-doc-title {
+    font-family: var(--display);
+    font-size: clamp(0.72rem, 3.5vw, 1rem);
+    font-weight: 700;
+    color: var(--player);
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-shadow: 0 0 20px var(--glow);
+    margin-bottom: 4px;
+  }
+  .ev-doc-sub {
+    font-family: var(--mono);
+    font-size: clamp(0.45rem, 1.6vw, 0.58rem);
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+ 
+  .ev-intro {
+    background: var(--dim);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: clamp(10px, 3vw, 14px) clamp(14px, 4vw, 28px);
+    font-family: var(--sans);
+    font-size: clamp(0.8rem, 3.2vw, 0.9rem);
+    color: var(--muted);
+    line-height: 1.7;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .ev-intro strong { color: var(--text); font-weight: 600; }
+ 
+  /* Photo stills */
+  .stills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+ 
+  .still-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .still-card:nth-child(1) { animation-delay: 0.1s; }
+  .still-card:nth-child(2) { animation-delay: 0.28s; }
+  .still-card:nth-child(3) { animation-delay: 0.46s; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+ 
+  .still-top {
+    background: var(--dim);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(6px, 2vw, 8px) clamp(12px, 3.5vw, 16px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .still-time {
+    font-family: var(--mono);
+    font-size: clamp(0.7rem, 3vw, 0.78rem);
+    color: var(--player);
+    text-shadow: 0 0 10px var(--glow);
+    letter-spacing: 0.06em;
+  }
+  .still-cam-tag {
+    font-family: var(--mono);
+    font-size: clamp(0.44rem, 1.6vw, 0.55rem);
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+ 
+  /* Simulated camera still */
+  .still-frame {
+    width: 100%;
+    height: clamp(90px, 25vw, 120px);
+    background: #060c18;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .still-frame canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.18;
+  }
+  .still-frame-label {
+    font-family: var(--mono);
+    font-size: clamp(0.5rem, 1.8vw, 0.6rem);
+    color: rgba(0,194,255,0.35);
+    letter-spacing: 0.1em;
+    z-index: 1;
+    text-align: center;
+    padding: 0 16px;
+  }
+  .still-frame::before { content:''; position:absolute; top:7px; left:7px; width:12px; height:12px; border-top:1px solid rgba(0,194,255,0.4); border-left:1px solid rgba(0,194,255,0.4); z-index:2; }
+  .still-frame::after  { content:''; position:absolute; bottom:7px; right:7px; width:12px; height:12px; border-bottom:1px solid rgba(0,194,255,0.4); border-right:1px solid rgba(0,194,255,0.4); z-index:2; }
+  .corner-tr { position:absolute; top:7px; right:7px; width:12px; height:12px; border-top:1px solid rgba(0,194,255,0.4); border-right:1px solid rgba(0,194,255,0.4); z-index:2; }
+  .corner-bl { position:absolute; bottom:7px; left:7px; width:12px; height:12px; border-bottom:1px solid rgba(0,194,255,0.4); border-left:1px solid rgba(0,194,255,0.4); z-index:2; }
+ 
+  .still-body { padding: clamp(10px, 3.5vw, 14px) clamp(14px, 4vw, 18px) clamp(12px, 3.5vw, 16px); }
+ 
+  .still-subjects {
+    font-family: var(--sans);
+    font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.6;
+  }
+  .still-subjects .name {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: clamp(0.62rem, 2.5vw, 0.72rem);
+    padding: 1px 7px;
+    border: 1px solid;
+    margin: 2px 3px 2px 0;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+  }
+  .name.blue   { color:#4da6ff; border-color:rgba(77,166,255,0.4);   background:rgba(77,166,255,0.07); }
+  .name.gold   { color:#f0c040; border-color:rgba(240,192,64,0.4);   background:rgba(240,192,64,0.07); }
+  .name.pink   { color:#f080b0; border-color:rgba(240,128,176,0.4);  background:rgba(240,128,176,0.07); }
+  .name.silver { color:#b0c8d8; border-color:rgba(176,200,216,0.4);  background:rgba(176,200,216,0.07); }
+  .name.purple { color:#b07cff; border-color:rgba(176,124,255,0.4);  background:rgba(176,124,255,0.07); }
+  .name.adrian { color:var(--player); border-color:rgba(0,194,255,0.4); background:rgba(0,194,255,0.07); }
+ 
+  .still-note {
+    font-family: var(--sans);
+    font-size: clamp(0.78rem, 3vw, 0.84rem);
+    color: var(--muted);
+    line-height: 1.65;
+    font-weight: 400;
+    margin-top: 5px;
+  }
+  .still-note em { color:#f0c040; font-style:normal; font-weight:600; }
+ 
+  /* Investigators learn panel */
+  .players-learn {
+    background: rgba(123,79,255,0.05);
+    border: 1px solid rgba(123,79,255,0.25);
+    padding: clamp(12px, 4vw, 16px) clamp(14px, 4.5vw, 20px);
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.65s ease forwards;
+  }
+  .players-learn h4 {
+    font-family: var(--mono);
+    font-size: clamp(0.5rem, 1.8vw, 0.58rem);
+    letter-spacing: 0.18em;
+    color: var(--oracle);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .learn-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-family: var(--sans);
+    font-size: clamp(0.82rem, 3.2vw, 0.88rem);
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .learn-item::before { content:'▸'; color:var(--oracle); font-size:0.6rem; flex-shrink:0; margin-top:3px; }
+  .learn-item strong { color:var(--text); font-weight:600; }
+ 
+  .reset-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: clamp(0.52rem, 2vw, 0.62rem);
+    letter-spacing: 0.14em;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    min-height: 48px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.8s ease forwards;
+  }
+  .reset-btn:active { border-color: var(--player); color: var(--player); }
+</style>
+</head>
+<body>
+ 
+<!-- ══════════════════════════════════════
+     SCREEN 1 — TITLE
+══════════════════════════════════════ -->
+<div class="screen" id="titleScreen">
+  <div class="oracle-icon">◈</div>
+  <div class="eyebrow">Eclipse Tower · Security Division · 2089</div>
+  <div class="title-main">ORACLE SECURITY<br>ARCHIVE</div>
+  <div class="title-sub">BALLROOM CAMERA A · RESTRICTED ACCESS</div>
+  <div class="divider"></div>
+  <div class="info-block">
+    <p>
+      Footage from the Eclipse Tower Gala has been<br>
+      secured under <strong>ORACLE lockdown protocol</strong>.<br><br>
+      Enter the correct access code to retrieve<br>
+      the ballroom security contact sheet.
+    </p>
+  </div>
+  <button class="proceed-btn" onclick="goTo('keypadScreen')">Access Terminal</button>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     SCREEN 2 — KEYPAD
+══════════════════════════════════════ -->
+<div class="screen hidden" id="keypadScreen">
+  <div class="keypad-shell">
+    <div class="cam-label">// ORACLE SECURITY · CAM-A · ECLIPSE TOWER BALLROOM //</div>
+    <div class="keypad-title">ENTER ACCESS CODE</div>
+ 
+    <div class="code-display" id="codeDisplay">
+      <div class="digit-box active" id="d0">_</div>
+      <div class="digit-box" id="d1">_</div>
+      <div class="digit-box" id="d2">_</div>
+      <div class="digit-box" id="d3">_</div>
+    </div>
+    <div class="status-msg idle" id="statusMsg">4-DIGIT SECURITY CODE REQUIRED</div>
+ 
+    <div class="keypad-grid">
+      <div class="key" onclick="pressKey('1')">1</div>
+      <div class="key" onclick="pressKey('2')">2</div>
+      <div class="key" onclick="pressKey('3')">3</div>
+      <div class="key" onclick="pressKey('4')">4</div>
+      <div class="key" onclick="pressKey('5')">5</div>
+      <div class="key" onclick="pressKey('6')">6</div>
+      <div class="key" onclick="pressKey('7')">7</div>
+      <div class="key" onclick="pressKey('8')">8</div>
+      <div class="key" onclick="pressKey('9')">9</div>
+      <div class="key del" onclick="pressDelete()">⌫ DEL</div>
+      <div class="key zero" onclick="pressKey('0')">0</div>
+      <div class="key del" onclick="pressClear()">CLR</div>
+      <div class="key enter" onclick="pressEnter()">SUBMIT CODE</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     SCREEN 3 — EVIDENCE
+══════════════════════════════════════ -->
+<div class="screen hidden" id="evidenceScreen">
+  <div class="evidence-shell">
+ 
+    <div class="ev-header">
+      <div class="ev-badge">Classified Evidence · Ballroom Security Camera A</div>
+      <div class="ev-doc-title">ECLIPSE TOWER GALA — PHOTO CONTACT SHEET</div>
+      <div class="ev-doc-sub">ORACLE ARCHIVE · ACCESS GRANTED · LUMEN PHOTOGRAPHY · PHOTOGRAPHER: L. MERCER</div>
+    </div>
+ 
+    <div class="ev-intro">
+      This is a printed contact sheet from <strong>Ballroom Security Camera A</strong>.<br>
+      Three timestamped stills recovered from the evening of the gala.
+    </div>
+ 
+    <div class="stills-grid">
+ 
+      <!-- 6:20 PM -->
+      <div class="still-card">
+        <div class="still-top">
+          <span class="still-time">● REC &nbsp;6:20 PM</span>
+          <span class="still-cam-tag">CAM-A · BALLROOM ENTRANCE</span>
+        </div>
+        <div class="still-frame">
+          <canvas class="noise-canvas"></canvas>
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+          <div class="still-frame-label">[ STILL 001 · 6:20:14 PM ]</div>
+        </div>
+        <div class="still-body">
+          <div class="still-subjects">
+            <span class="name blue">BLUE</span> standing in front of <span class="name adrian">ADRIAN</span>
+          </div>
+          <div class="still-subjects" style="margin-top:4px;">
+            Visible nearby: <span class="name gold">GOLD</span> <span class="name pink">PINK</span> <span class="name silver">SILVER</span>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 6:45 PM -->
+      <div class="still-card">
+        <div class="still-top">
+          <span class="still-time">● REC &nbsp;6:45 PM</span>
+          <span class="still-cam-tag">CAM-A · RESEARCH DISPLAY · EAST BALLROOM</span>
+        </div>
+        <div class="still-frame">
+          <canvas class="noise-canvas"></canvas>
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+          <div class="still-frame-label">[ STILL 002 · 6:45:22 PM ]</div>
+        </div>
+        <div class="still-body">
+          <div class="still-subjects">
+            <span class="name purple">PURPLE</span> speaking with <span class="name adrian">ADRIAN</span> near the Research Display
+          </div>
+          <div class="still-note">Body language clearly shows a <em>heated conversation</em>.</div>
+        </div>
+      </div>
+ 
+      <!-- 7:15 PM -->
+      <div class="still-card">
+        <div class="still-top">
+          <span class="still-time">● REC &nbsp;7:15 PM</span>
+          <span class="still-cam-tag">CAM-A · MAIN STAGE · ECLIPSE TOWER BALLROOM</span>
+        </div>
+        <div class="still-frame">
+          <canvas class="noise-canvas"></canvas>
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+          <div class="still-frame-label">[ STILL 003 · 7:15:11 PM ]</div>
+        </div>
+        <div class="still-body">
+          <div class="still-subjects">
+            <span class="name adrian">ADRIAN</span> standing on stage beginning his presentation
+          </div>
+          <div class="still-note">Confident and composed. Scanning the audience before continuing.</div>
+        </div>
+      </div>
+ 
+    </div>
+ 
+    <div class="players-learn">
+      <h4>// Investigators now know</h4>
+      <div class="learn-item"><strong>Blue</strong> publicly confronted Adrian before the presentation.</div>
+      <div class="learn-item"><strong>Purple</strong> argued with Adrian near the Research Display at 6:45 PM.</div>
+      <div class="learn-item"><strong>Adrian</strong> successfully began his presentation at 7:15 PM.</div>
+    </div>
+ 
+    <button class="reset-btn" onclick="resetApp()">⟳ &nbsp; CLEAR SESSION · RETURN TO TERMINAL</button>
+ 
+  </div>
+</div>
+ 
+<script>
+  const CORRECT_CODE = '5535';
+ 
+  let digits = [];
+  let locked = false;
+ 
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    if (id === 'keypadScreen') resetCode();
+    if (id === 'evidenceScreen') drawNoiseFrames();
+  }
+ 
+  function resetApp() { goTo('titleScreen'); }
+ 
+  function pressKey(k) {
+    if (locked || digits.length >= 4) return;
+    digits.push(k);
+    updateDisplay();
+  }
+ 
+  function pressDelete() {
+    if (locked) return;
+    digits.pop();
+    updateDisplay();
+    setStatus('4-DIGIT SECURITY CODE REQUIRED', 'idle');
+  }
+ 
+  function pressClear() {
+    if (locked) return;
+    resetCode();
+    setStatus('CODE CLEARED', 'idle');
+  }
+ 
+  function pressEnter() {
+    if (locked || digits.length < 4) {
+      setStatus('INCOMPLETE CODE — ENTER 4 DIGITS', 'err');
+      shakeDisplay();
+      return;
+    }
+    if (digits.join('') === CORRECT_CODE) {
+      setStatus('ACCESS GRANTED', 'ok');
+      locked = true;
+      document.querySelectorAll('.digit-box').forEach(d => {
+        d.style.borderColor = '#00e5a0';
+        d.style.color = '#00e5a0';
+        d.style.textShadow = '0 0 14px rgba(0,229,160,0.5)';
+      });
+      setTimeout(() => goTo('evidenceScreen'), 900);
+    } else {
+      setStatus('ACCESS DENIED — INCORRECT CODE', 'err');
+      shakeDisplay();
+      setTimeout(() => { resetCode(); setStatus('RE-ENTER ACCESS CODE', 'idle'); }, 1200);
+    }
+  }
+ 
+  function resetCode() {
+    digits = [];
+    locked = false;
+    updateDisplay();
+    setStatus('4-DIGIT SECURITY CODE REQUIRED', 'idle');
+  }
+ 
+  function updateDisplay() {
+    for (let i = 0; i < 4; i++) {
+      const box = document.getElementById('d' + i);
+      box.textContent = digits[i] !== undefined ? digits[i] : '_';
+      box.className = 'digit-box';
+      if (i === digits.length && !locked) box.classList.add('active');
+      if (digits[i] !== undefined)        box.classList.add('filled');
+    }
+  }
+ 
+  function setStatus(text, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = text;
+    el.className = 'status-msg ' + type;
+  }
+ 
+  function shakeDisplay() {
+    document.querySelectorAll('.digit-box').forEach(d => {
+      d.classList.add('error');
+      setTimeout(() => d.classList.remove('error'), 400);
+    });
+  }
+ 
+  // Physical keyboard support
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('keypadScreen').classList.contains('hidden')) return;
+    if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+    else if (e.key === 'Backspace') pressDelete();
+    else if (e.key === 'Escape')    pressClear();
+    else if (e.key === 'Enter')     pressEnter();
+  });
+ 
+  // Noise texture for camera frames
+  function drawNoiseFrames() {
+    setTimeout(() => {
+      document.querySelectorAll('.noise-canvas').forEach(canvas => {
+        const parent = canvas.parentElement;
+        canvas.width  = parent.offsetWidth  || 400;
+        canvas.height = parent.offsetHeight || 100;
+        const ctx = canvas.getContext('2d');
+        const id  = ctx.createImageData(canvas.width, canvas.height);
+        const d   = id.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const v = Math.random() * 80;
+          d[i] = 0; d[i+1] = Math.round(v * 0.6); d[i+2] = Math.round(v); d[i+3] = 255;
+        }
+        ctx.putImageData(id, 0, 0);
+      });
+    }, 50);
+  }
+</script>
+</body>
+</html>
+ 
