@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ORACLE — Incident Report #OR-0718</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+ 
+  :root {
+    --bg:        #04030a;
+    --surface:   #0a0814;
+    --border:    #1c1230;
+    --dim:       #0f0b1c;
+    --oracle:    #7b4fff;
+    --oracle-g:  rgba(123,79,255,0.4);
+    --player:    #00c2ff;
+    --player-g:  rgba(0,194,255,0.35);
+    --amber:     #ffaa00;
+    --amber-g:   rgba(255,170,0,0.35);
+    --red:       #ff3344;
+    --red-g:     rgba(255,51,68,0.4);
+    --muted:     #5a4a7a;
+    --text:      #d8ccf0;
+    --mono:      'Share Tech Mono', monospace;
+    --display:   'Orbitron', sans-serif;
+    --sans:      'Rajdhani', sans-serif;
+  }
+ 
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+ 
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+ 
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(123,79,255,0.012) 2px, rgba(123,79,255,0.012) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 50% 35%, rgba(123,79,255,0.09) 0%, transparent 65%),
+                radial-gradient(ellipse at 85% 85%, rgba(0,194,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+ 
+  /* SCREENS */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 20px;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+ 
+  /* TITLE */
+  .sec-icon {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: var(--oracle);
+    text-shadow: 0 0 40px var(--oracle-g);
+    margin-bottom: 16px;
+    animation: secPulse 2.6s ease-in-out infinite alternate;
+  }
+  @keyframes secPulse {
+    from { opacity: 0.55; text-shadow: 0 0 16px var(--oracle-g); }
+    to   { opacity: 1;    text-shadow: 0 0 55px var(--oracle-g), 0 0 90px rgba(123,79,255,0.2); }
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: clamp(0.48rem, 2vw, 0.6rem);
+    letter-spacing: 0.35em; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 10px; text-align: center;
+  }
+  .title-main {
+    font-family: var(--display);
+    font-size: clamp(1.2rem, 5.5vw, 2.2rem);
+    font-weight: 900; color: var(--oracle);
+    letter-spacing: 0.08em; text-align: center;
+    line-height: 1.2; text-shadow: 0 0 30px var(--oracle-g);
+    margin-bottom: 6px;
+  }
+  .title-sub {
+    font-family: var(--display);
+    font-size: clamp(0.52rem, 2vw, 0.68rem);
+    font-weight: 400; color: var(--muted);
+    letter-spacing: 0.22em; margin-bottom: 24px; text-align: center;
+  }
+  .divider {
+    width: min(280px, 80vw); height: 1px;
+    background: linear-gradient(90deg, transparent, var(--oracle), transparent);
+    opacity: 0.35; margin-bottom: 24px;
+  }
+  .info-block {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 16px 20px; width: 100%; max-width: 400px;
+    margin-bottom: 24px; position: relative;
+  }
+  .info-block::before { content:''; position:absolute; inset:4px; border:1px solid rgba(123,79,255,0.06); pointer-events:none; }
+  .info-block p { font-family: var(--sans); font-size: clamp(0.82rem, 3.5vw, 0.9rem); color: var(--muted); line-height: 1.85; text-align: center; font-weight: 400; }
+  .info-block p strong { color: var(--oracle); font-weight: 600; }
+ 
+  .proceed-btn {
+    background: transparent; border: 1px solid var(--oracle); color: var(--oracle);
+    font-family: var(--display); font-size: clamp(0.62rem, 2.8vw, 0.76rem);
+    font-weight: 700; letter-spacing: 0.28em; padding: 15px 44px;
+    cursor: pointer; text-transform: uppercase;
+    box-shadow: 0 0 16px rgba(123,79,255,0.08);
+    min-height: 52px; display: flex; align-items: center;
+  }
+  .proceed-btn:active { background: rgba(123,79,255,0.09); box-shadow: 0 0 28px rgba(123,79,255,0.22); }
+ 
+  /* KEYPAD */
+  .keypad-shell {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: clamp(20px,5vw,36px) clamp(18px,6vw,40px) clamp(22px,5vw,40px);
+    width: 100%; max-width: 380px; position: relative;
+    box-shadow: 0 0 80px rgba(0,0,0,0.8), 0 0 40px rgba(123,79,255,0.05);
+  }
+  .keypad-shell::before { content:''; position:absolute; inset:5px; border:1px solid rgba(123,79,255,0.07); pointer-events:none; }
+  .cam-label { font-family:var(--mono); font-size:clamp(0.46rem,1.8vw,0.56rem); letter-spacing:0.16em; color:var(--muted); text-align:center; margin-bottom:4px; }
+  .keypad-title { font-family:var(--display); font-size:clamp(0.82rem,3.5vw,1.05rem); font-weight:700; color:var(--oracle); text-align:center; letter-spacing:0.14em; text-shadow:0 0 20px var(--oracle-g); margin-bottom:clamp(18px,4vw,28px); }
+ 
+  .code-display { display:flex; justify-content:center; gap:clamp(8px,3vw,12px); margin-bottom:8px; }
+  .digit-box {
+    width:clamp(44px,13vw,56px); height:clamp(56px,16vw,68px);
+    background:var(--dim); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:clamp(1.6rem,6vw,2rem);
+    color:var(--oracle); text-shadow:0 0 12px var(--oracle-g);
+    transition:border-color 0.2s, box-shadow 0.2s; position:relative;
+  }
+  .digit-box.active { border-color:var(--oracle); box-shadow:0 0 14px rgba(123,79,255,0.25); }
+  .digit-box.active::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:18px; height:2px; background:var(--oracle); animation:blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .digit-box.filled { border-color:rgba(123,79,255,0.3); }
+  .digit-box.error { border-color:var(--red); color:var(--red); text-shadow:0 0 14px var(--red-g); box-shadow:0 0 16px var(--red-g); animation:shake 0.35s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+ 
+  .status-msg { font-family:var(--mono); font-size:clamp(0.5rem,2vw,0.6rem); letter-spacing:0.12em; text-align:center; height:18px; margin-bottom:clamp(16px,4vw,24px); transition:color 0.2s; }
+  .status-msg.err  { color:var(--red); }
+  .status-msg.ok   { color:#00e5a0; }
+  .status-msg.idle { color:var(--muted); }
+ 
+  .keypad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(7px,2.5vw,10px); }
+  .key { background:var(--dim); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:clamp(1rem,4vw,1.15rem); padding:clamp(16px,5vw,20px) 0; cursor:pointer; transition:background 0.1s,border-color 0.1s; text-align:center; user-select:none; }
+  .key:active      { background:rgba(123,79,255,0.12); border-color:var(--oracle); color:var(--oracle); }
+  .key.del         { color:var(--muted); font-size:clamp(0.6rem,2.4vw,0.72rem); letter-spacing:0.08em; }
+  .key.del:active  { background:rgba(255,51,68,0.08); border-color:var(--red); color:var(--red); }
+  .key.zero        { grid-column:2; }
+  .key.enter       { grid-column:1/-1; color:var(--oracle); font-family:var(--display); font-size:clamp(0.62rem,2.8vw,0.76rem); letter-spacing:0.22em; padding:clamp(14px,4vw,16px) 0; border-color:rgba(123,79,255,0.3); }
+  .key.enter:active { background:rgba(123,79,255,0.1); box-shadow:0 0 18px rgba(123,79,255,0.18); }
+ 
+  /* EVIDENCE */
+  #evidenceScreen { justify-content:flex-start; padding-top:24px; padding-bottom:48px; }
+  .evidence-shell { width:100%; max-width:660px; }
+ 
+  .doc-header {
+    border:1px solid var(--oracle); background:var(--surface);
+    padding:clamp(14px,4vw,20px) clamp(16px,5vw,26px);
+    margin-bottom:2px; position:relative;
+    box-shadow:0 0 30px rgba(123,79,255,0.06);
+  }
+  .doc-header::before { content:''; position:absolute; inset:4px; border:1px solid rgba(123,79,255,0.08); pointer-events:none; }
+  .doc-badge { font-family:var(--mono); font-size:clamp(0.46rem,1.8vw,0.54rem); letter-spacing:0.22em; color:var(--muted); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .doc-badge::before, .doc-badge::after { content:''; flex:1; height:1px; opacity:0.3; background:linear-gradient(90deg,transparent,var(--oracle)); }
+  .doc-badge::after { background:linear-gradient(90deg,var(--oracle),transparent); }
+  .doc-title { font-family:var(--display); font-size:clamp(0.7rem,3.3vw,0.98rem); font-weight:700; color:var(--oracle); letter-spacing:0.08em; text-align:center; text-shadow:0 0 18px var(--oracle-g); margin-bottom:4px; }
+  .doc-sub { font-family:var(--mono); font-size:clamp(0.44rem,1.6vw,0.55rem); color:var(--muted); text-align:center; letter-spacing:0.1em; }
+ 
+  .doc-recovered {
+    background:var(--dim); border:1px solid var(--border); border-top:none;
+    padding:clamp(8px,3vw,12px) clamp(14px,4vw,24px);
+    font-family:var(--mono); font-size:clamp(0.6rem,2.4vw,0.68rem);
+    color:var(--muted); text-align:center; letter-spacing:0.12em;
+    margin-bottom:18px; line-height: 1.7;
+  }
+  .doc-recovered strong { color: var(--oracle); }
+  .doc-recovered .report-id { color: var(--player); }
+ 
+  .incidents { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+ 
+  .incident-card {
+    background:var(--surface); border:1px solid var(--border); overflow:hidden;
+    opacity:0; transform:translateY(12px); animation:fadeUp 0.5s ease forwards;
+  }
+  .incident-card:nth-child(1) { animation-delay:0.08s; }
+  .incident-card:nth-child(2) { animation-delay:0.22s; }
+  .incident-card:nth-child(3) { animation-delay:0.36s; }
+  .incident-card:nth-child(4) { animation-delay:0.50s; }
+  @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+ 
+  .incident-top {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:6px;
+    padding:clamp(8px,2.5vw,10px) clamp(12px,3.5vw,16px);
+    border-bottom:1px solid var(--border);
+  }
+  .incident-top.anomaly  { background:rgba(123,79,255,0.07); border-left:3px solid var(--oracle); }
+  .incident-top.activity { background:rgba(0,194,255,0.05);  border-left:3px solid var(--player); }
+  .incident-top.alert    { background:rgba(255,170,0,0.06);  border-left:3px solid var(--amber); }
+  .incident-top.neutral  { background:var(--dim); border-left:3px solid var(--border); }
+ 
+  .incident-time { font-family:var(--mono); font-size:clamp(0.68rem,2.8vw,0.78rem); color:var(--oracle); text-shadow:0 0 8px var(--oracle-g); letter-spacing:0.04em; }
+  .incident-name { font-family:var(--mono); font-size:clamp(0.62rem,2.5vw,0.72rem); color:var(--text); letter-spacing:0.06em; font-weight:600; margin-top:2px; }
+ 
+  .tag { font-family:var(--mono); font-size:clamp(0.46rem,1.7vw,0.54rem); letter-spacing:0.12em; padding:2px 8px; border:1px solid; text-transform:uppercase; }
+  .tag.anomaly  { color:var(--oracle); border-color:rgba(123,79,255,0.4); background:rgba(123,79,255,0.07); }
+  .tag.activity { color:var(--player); border-color:rgba(0,194,255,0.4); background:rgba(0,194,255,0.06); }
+  .tag.alert    { color:var(--amber);  border-color:rgba(255,170,0,0.4); background:rgba(255,170,0,0.06); }
+ 
+  .incident-body { padding:clamp(12px,3.5vw,16px) clamp(14px,4vw,20px); }
+  .incident-desc { font-family:var(--sans); font-size:clamp(0.8rem,3.2vw,0.87rem); color:var(--muted); line-height:1.75; margin-bottom:10px; font-weight:400; }
+  .incident-desc:last-child { margin-bottom: 0; }
+  .incident-desc strong { color: var(--text); font-weight: 600; }
+  .divider-line { height:1px; background:var(--border); margin:10px 0; }
+ 
+  .kv-row { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+  .kv-label { font-family:var(--mono); font-size:clamp(0.54rem,2vw,0.62rem); color:var(--muted); letter-spacing:0.12em; white-space:nowrap; flex-shrink:0; }
+  .kv-value { font-family:var(--sans); font-size:clamp(0.8rem,3.2vw,0.88rem); color:var(--text); font-weight:600; line-height:1.4; }
+  .kv-value.ack { color: #00e5a0; }
+ 
+  .mask-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: clamp(0.62rem, 2.5vw, 0.72rem);
+    padding: 1px 7px;
+    border: 1px solid;
+    margin-left: 4px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+  }
+  .mask-tag.silver { color:#b0c8d8; border-color:rgba(176,200,216,0.4); background:rgba(176,200,216,0.07); }
+  .mask-tag.blue   { color:#4da6ff; border-color:rgba(77,166,255,0.4);  background:rgba(77,166,255,0.07); }
+  .mask-tag.black  { color:#8888a0; border-color:rgba(136,136,160,0.5); background:rgba(136,136,160,0.08); }
+ 
+  /* Final line / report footer */
+  .report-footer {
+    background: var(--surface);
+    border: 1px solid rgba(255,51,68,0.3);
+    padding: clamp(14px,4vw,20px) clamp(16px,4.5vw,22px);
+    margin-bottom: 16px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.62s ease forwards;
+    box-shadow: 0 0 20px rgba(255,51,68,0.04);
+  }
+  .report-footer-label {
+    font-family: var(--mono);
+    font-size: clamp(0.5rem,1.8vw,0.58rem);
+    color: var(--red);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .report-footer-label::after { content:''; flex:1; height:1px; background: rgba(255,51,68,0.25); }
+  .report-footer-text {
+    font-family: var(--mono);
+    font-size: clamp(0.85rem,3.4vw,0.95rem);
+    color: var(--red);
+    text-shadow: 0 0 10px rgba(255,51,68,0.25);
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+  }
+ 
+  .reset-btn {
+    display:block; width:100%; background:transparent; border:1px solid var(--border);
+    color:var(--muted); font-family:var(--mono); font-size:clamp(0.5rem,2vw,0.6rem);
+    letter-spacing:0.14em; padding:14px; cursor:pointer; text-transform:uppercase;
+    min-height:48px;
+    opacity:0; animation:fadeUp 0.5s 0.78s ease forwards;
+  }
+  .reset-btn:active { border-color:var(--oracle); color:var(--oracle); }
+</style>
+</head>
+<body>
+ 
+<!-- TITLE -->
+<div class="screen" id="titleScreen">
+  <div class="sec-icon">◈</div>
+  <div class="eyebrow">Eclipse Tower · ORACLE Operations Center · 2089</div>
+  <div class="title-main">ORACLE SYSTEM<br>INCIDENT ARCHIVE</div>
+  <div class="title-sub">AUTOMATED DIAGNOSTIC LOG · RESTRICTED ACCESS</div>
+  <div class="divider"></div>
+  <div class="info-block">
+    <p>
+      ORACLE generated an automatic incident report<br>
+      following the system failure at Eclipse Tower.<br><br>
+      Enter the operations terminal access code<br>
+      to retrieve Incident Report #OR-0718.
+    </p>
+  </div>
+  <button class="proceed-btn" onclick="goTo('keypadScreen')">Access ORACLE Terminal</button>
+</div>
+ 
+<!-- KEYPAD -->
+<div class="screen hidden" id="keypadScreen">
+  <div class="keypad-shell">
+    <div class="cam-label">// ORACLE OPERATIONS CENTER · ECLIPSE TOWER · DIAGNOSTIC ARCHIVE //</div>
+    <div class="keypad-title">ENTER ACCESS CODE</div>
+    <div class="code-display">
+      <div class="digit-box active" id="d0">_</div>
+      <div class="digit-box" id="d1">_</div>
+      <div class="digit-box" id="d2">_</div>
+      <div class="digit-box" id="d3">_</div>
+    </div>
+    <div class="status-msg idle" id="statusMsg">4-DIGIT ACCESS CODE REQUIRED</div>
+    <div class="keypad-grid">
+      <div class="key" onclick="pressKey('1')">1</div>
+      <div class="key" onclick="pressKey('2')">2</div>
+      <div class="key" onclick="pressKey('3')">3</div>
+      <div class="key" onclick="pressKey('4')">4</div>
+      <div class="key" onclick="pressKey('5')">5</div>
+      <div class="key" onclick="pressKey('6')">6</div>
+      <div class="key" onclick="pressKey('7')">7</div>
+      <div class="key" onclick="pressKey('8')">8</div>
+      <div class="key" onclick="pressKey('9')">9</div>
+      <div class="key del" onclick="pressDelete()">⌫ DEL</div>
+      <div class="key zero" onclick="pressKey('0')">0</div>
+      <div class="key del" onclick="pressClear()">CLR</div>
+      <div class="key enter" onclick="pressEnter()">SUBMIT CODE</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- EVIDENCE -->
+<div class="screen hidden" id="evidenceScreen">
+  <div class="evidence-shell">
+ 
+    <div class="doc-header">
+      <div class="doc-badge">Classified Evidence · ORACLE Operations Center · Eclipse Tower</div>
+      <div class="doc-title">ORACLE SYSTEM INCIDENT REPORT</div>
+      <div class="doc-sub">AUTOMATED DIAGNOSTIC LOG · GALA NIGHT · ACCESS GRANTED</div>
+    </div>
+ 
+    <div class="doc-recovered">
+      Recovered from the <strong>ORACLE Operations Center</strong><br>
+      Incident Report <span class="report-id">#OR-0718</span> · Generated Automatically Following System Failure
+    </div>
+ 
+    <div class="incidents">
+ 
+      <!-- 7:08:12 PM -->
+      <div class="incident-card">
+        <div class="incident-top anomaly">
+          <div>
+            <div class="incident-time">7:08:12 PM</div>
+            <div class="incident-name">Diagnostic Anomaly Detected</div>
+          </div>
+          <div class="tag anomaly">Anomaly</div>
+        </div>
+        <div class="incident-body">
+          <div class="incident-desc">
+            Unexpected command sequence received by ORACLE.
+          </div>
+          <div class="incident-desc">
+            Operator <span class="mask-tag silver">SILVER</span> opened diagnostic review.
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 7:08:47 PM -->
+      <div class="incident-card">
+        <div class="incident-top activity">
+          <div>
+            <div class="incident-time">7:08:47 PM</div>
+            <div class="incident-name">External User Activity Logged</div>
+          </div>
+          <div class="tag activity">Activity</div>
+        </div>
+        <div class="incident-body">
+          <div class="incident-desc">
+            <span class="mask-tag blue">BLUE</span> connected to the public ORACLE terminal and initiated a system observation log.
+          </div>
+          <div class="incident-desc">
+            Personal notes were created on his mobile device.
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 7:09:03 PM -->
+      <div class="incident-card">
+        <div class="incident-top alert">
+          <div>
+            <div class="incident-time">7:09:03 PM</div>
+            <div class="incident-name">Security Notification Sent</div>
+          </div>
+          <div class="tag alert">Alert</div>
+        </div>
+        <div class="incident-body">
+          <div class="incident-desc">
+            Automatic security alert delivered to:
+          </div>
+          <div class="divider-line"></div>
+          <div class="kv-row">
+            <span class="kv-label">RECIPIENT</span>
+            <span class="kv-value">Head of Security <span class="mask-tag black">BLACK</span></span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">STATUS</span>
+            <span class="kv-value ack">Alert acknowledged</span>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 7:09:21 PM -->
+      <div class="incident-card">
+        <div class="incident-top neutral">
+          <div>
+            <div class="incident-time">7:09:21 PM</div>
+            <div class="incident-name">System Status</div>
+          </div>
+        </div>
+        <div class="incident-body">
+          <div class="incident-desc">
+            No emergency shutdown initiated.
+          </div>
+          <div class="incident-desc">
+            Presentation preparations continued.
+          </div>
+        </div>
+      </div>
+ 
+    </div><!-- /incidents -->
+ 
+    <!-- Report footer -->
+    <div class="report-footer">
+      <div class="report-footer-label">Bottom of Report</div>
+      <div class="report-footer-text">Incident escalation was never requested prior to the blackout.</div>
+    </div>
+ 
+    <button class="reset-btn" onclick="resetApp()">⟳ &nbsp; CLEAR SESSION · RETURN TO TERMINAL</button>
+ 
+  </div>
+</div>
+ 
+<script>
+  const CORRECT_CODE = '3732';
+  let digits = [], locked = false;
+ 
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    if (id === 'keypadScreen') resetCode();
+  }
+  function resetApp() { goTo('titleScreen'); }
+ 
+  function pressKey(k) {
+    if (locked || digits.length >= 4) return;
+    digits.push(k); updateDisplay();
+  }
+  function pressDelete() {
+    if (locked) return;
+    digits.pop(); updateDisplay();
+    setStatus('4-DIGIT ACCESS CODE REQUIRED', 'idle');
+  }
+  function pressClear() {
+    if (locked) return;
+    resetCode(); setStatus('CODE CLEARED', 'idle');
+  }
+  function pressEnter() {
+    if (locked || digits.length < 4) { setStatus('INCOMPLETE — ENTER 4-DIGIT CODE', 'err'); shakeDisplay(); return; }
+    if (digits.join('') === CORRECT_CODE) {
+      setStatus('ACCESS GRANTED', 'ok');
+      locked = true;
+      document.querySelectorAll('.digit-box').forEach(d => {
+        d.style.borderColor = '#00e5a0';
+        d.style.color = '#00e5a0';
+        d.style.textShadow = '0 0 14px rgba(0,229,160,0.5)';
+      });
+      setTimeout(() => goTo('evidenceScreen'), 900);
+    } else {
+      setStatus('ACCESS DENIED — INCORRECT CODE', 'err');
+      shakeDisplay();
+      setTimeout(() => { resetCode(); setStatus('RE-ENTER ACCESS CODE', 'idle'); }, 1200);
+    }
+  }
+  function resetCode() { digits = []; locked = false; updateDisplay(); setStatus('4-DIGIT ACCESS CODE REQUIRED', 'idle'); }
+  function updateDisplay() {
+    for (let i = 0; i < 4; i++) {
+      const box = document.getElementById('d' + i);
+      box.textContent = digits[i] !== undefined ? digits[i] : '_';
+      box.className = 'digit-box';
+      if (i === digits.length && !locked) box.classList.add('active');
+      if (digits[i] !== undefined) box.classList.add('filled');
+    }
+  }
+  function setStatus(text, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = text; el.className = 'status-msg ' + type;
+  }
+  function shakeDisplay() {
+    document.querySelectorAll('.digit-box').forEach(d => {
+      d.classList.add('error');
+      setTimeout(() => d.classList.remove('error'), 400);
+    });
+  }
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('keypadScreen').classList.contains('hidden')) return;
+    if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+    else if (e.key === 'Backspace') pressDelete();
+    else if (e.key === 'Escape') pressClear();
+    else if (e.key === 'Enter') pressEnter();
+  });
+</script>
+</body>
+</html>
+ 
