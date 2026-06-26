@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE — Blackout Archive</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&display=swap');
+ 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  :root {
+    --black: #050608;
+    --deep: #0a0c10;
+    --panel: #0f1218;
+    --border: #1e2530;
+    --gold: #b8973a;
+    --gold-dim: #6b5520;
+    --red: #8b1a1a;
+    --red-bright: #c0392b;
+    --text: #c8cdd6;
+    --text-dim: #4a5060;
+    --text-muted: #2a3040;
+    --mono: 'Share Tech Mono', monospace;
+    --serif: 'Cormorant Garamond', serif;
+    --scan-speed: 6s;
+  }
+ 
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--text);
+    font-family: var(--mono);
+    overflow: hidden;
+  }
+ 
+  /* scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+ 
+  /* ── SCREENS ── */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+ 
+  /* ── BOOT SCREEN ── */
+  #screen-boot {
+    background: var(--black);
+    gap: 0;
+  }
+ 
+  .boot-logo {
+    font-family: var(--serif);
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+ 
+  .boot-sub {
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: var(--gold-dim);
+    text-align: center;
+    margin-bottom: 60px;
+    text-transform: uppercase;
+  }
+ 
+  .boot-lines {
+    width: min(500px, 90vw);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 2;
+  }
+ 
+  .boot-line {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .boot-line.show { opacity: 1; transform: none; }
+  .boot-line .ok { color: var(--gold); }
+  .boot-line .warn { color: var(--red-bright); }
+ 
+  .boot-enter {
+    margin-top: 40px;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 0.5px solid var(--gold-dim);
+    padding: 12px 32px;
+    background: transparent;
+    font-family: var(--mono);
+    transition: background 0.2s, color 0.2s;
+    opacity: 0;
+  }
+  .boot-enter:hover { background: var(--gold); color: var(--black); }
+  .boot-enter.show { opacity: 1; }
+ 
+  /* ── SECTION INTRO ── */
+  #screen-intro {
+    background: var(--black);
+    gap: 16px;
+    text-align: center;
+    padding: 40px;
+  }
+ 
+  .intro-label {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+ 
+  .intro-title {
+    font-family: var(--serif);
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+ 
+  .intro-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    line-height: 1.9;
+    max-width: 480px;
+  }
+ 
+  .intro-warning {
+    font-size: 10px;
+    color: var(--red-bright);
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+  }
+ 
+  .intro-btn {
+    margin-top: 20px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text);
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    padding: 11px 28px;
+    background: transparent;
+    font-family: var(--mono);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .intro-btn:hover { border-color: var(--gold); color: var(--gold); }
+ 
+  /* ── SEQUENCE SCREEN ── */
+  #screen-sequence {
+    background: var(--black);
+  }
+ 
+  .seq-stage {
+    width: min(700px, 95vw);
+    height: min(420px, 60vh);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.5px solid var(--border);
+  }
+ 
+  .seq-countdown {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+  }
+ 
+  .seq-shape {
+    position: absolute;
+    transition: opacity 0.3s;
+  }
+ 
+  /* ── QUESTION SCREEN ── */
+  #screen-question {
+    background: var(--black);
+    gap: 0;
+    padding: 40px;
+  }
+ 
+  .q-header {
+    font-size: 9px;
+    letter-spacing: 0.5em;
+    color: var(--red-bright);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+ 
+  .q-text {
+    font-family: var(--serif);
+    font-size: clamp(22px, 3.5vw, 36px);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    text-align: center;
+    max-width: 640px;
+    line-height: 1.4;
+    margin-bottom: 48px;
+  }
+ 
+  .q-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: min(560px, 92vw);
+  }
+ 
+  .q-option {
+    border: 0.5px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 16px 20px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    text-transform: uppercase;
+  }
+  .q-option:hover { border-color: var(--gold); color: var(--gold); background: rgba(184,151,58,0.05); }
+  .q-option.correct { border-color: var(--gold); color: var(--gold); background: rgba(184,151,58,0.08); pointer-events: none; }
+  .q-option.wrong { border-color: var(--red-bright); color: var(--red-bright); background: rgba(192,57,43,0.08); pointer-events: none; }
+  .q-option.disabled { pointer-events: none; opacity: 0.3; }
+ 
+  /* ── RESULT SCREEN (correct) ── */
+  #screen-correct {
+    background: var(--black);
+    gap: 16px;
+    text-align: center;
+  }
+ 
+  .result-icon {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+ 
+  .result-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+ 
+  .result-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+ 
+  .result-btn {
+    margin-top: 32px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text);
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    padding: 12px 32px;
+    background: transparent;
+    font-family: var(--mono);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .result-btn:hover { border-color: var(--gold); color: var(--gold); }
+ 
+  /* ── FAIL SCREEN ── */
+  #screen-fail {
+    background: var(--black);
+    gap: 16px;
+    text-align: center;
+  }
+ 
+  .fail-label {
+    font-size: 9px;
+    letter-spacing: 0.5em;
+    color: var(--red-bright);
+    text-transform: uppercase;
+  }
+ 
+  .fail-title {
+    font-family: var(--serif);
+    font-size: clamp(26px, 5vw, 52px);
+    font-weight: 300;
+    color: var(--red-bright);
+    letter-spacing: 0.1em;
+  }
+ 
+  .fail-msg {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    line-height: 2;
+  }
+ 
+  .fail-btn {
+    margin-top: 24px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--red-bright);
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 0.5px solid var(--red);
+    padding: 12px 32px;
+    background: transparent;
+    font-family: var(--mono);
+    transition: background 0.2s, color 0.2s;
+  }
+  .fail-btn:hover { background: var(--red-bright); color: var(--black); }
+ 
+  /* ── COMPLETE SCREEN ── */
+  #screen-complete {
+    background: var(--black);
+    gap: 20px;
+    text-align: center;
+    padding: 40px;
+  }
+ 
+  .complete-eye {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 8px;
+    opacity: 0.8;
+  }
+ 
+  .complete-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 54px);
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+  }
+ 
+  .complete-sub {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+  }
+ 
+  .complete-msg {
+    font-family: var(--serif);
+    font-size: clamp(14px, 2vw, 18px);
+    font-style: italic;
+    font-weight: 300;
+    color: var(--text-dim);
+    max-width: 540px;
+    line-height: 1.8;
+    margin-top: 8px;
+  }
+ 
+  /* ── GLITCH ── */
+  @keyframes glitch {
+    0%   { clip-path: inset(0 0 98% 0); transform: translateX(-4px); }
+    10%  { clip-path: inset(40% 0 50% 0); transform: translateX(4px); }
+    20%  { clip-path: inset(80% 0 5% 0); transform: translateX(-2px); }
+    30%  { clip-path: inset(20% 0 70% 0); transform: translateX(3px); }
+    100% { clip-path: inset(0 0 98% 0); transform: translateX(0); }
+  }
+ 
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.4; }
+    94% { opacity: 1; }
+    97% { opacity: 0.7; }
+    98% { opacity: 1; }
+  }
+ 
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--border); }
+    50% { border-color: var(--gold-dim); }
+  }
+ 
+  .seq-stage { animation: pulse-border 4s ease-in-out infinite; }
+ 
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+ 
+  .anim-fadeup { animation: fadeUp 0.5s ease forwards; }
+ 
+  /* shape animations */
+  @keyframes shapeIn  { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+  @keyframes shapeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.85); } }
+  .shape-in  { animation: shapeIn  0.35s ease forwards; }
+  .shape-out { animation: shapeOut 0.3s ease forwards; }
+ 
+  /* divider */
+  .divider {
+    width: 60px;
+    height: 0.5px;
+    background: var(--gold-dim);
+    margin: 0 auto;
+  }
+ 
+  /* section badge */
+  .section-badge {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--gold-dim);
+    border: 0.5px solid var(--gold-dim);
+    padding: 4px 12px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+ 
+<!-- BOOT -->
+<div class="screen active" id="screen-boot">
+  <div class="boot-logo">ORACLE</div>
+  <div class="boot-sub">Continuum Protocol Archive · Restricted Access</div>
+  <div class="boot-lines" id="boot-lines"></div>
+  <button class="boot-enter" id="boot-enter" onclick="startGame()">Initialize Archive</button>
+</div>
+ 
+<!-- SECTION INTRO -->
+<div class="screen" id="screen-intro">
+  <div class="section-badge" id="intro-badge">Archive Segment 01</div>
+  <div style="height:20px"></div>
+  <div class="intro-label">Memory Calibration Required</div>
+  <div class="intro-title" id="intro-title">Attention Protocol</div>
+  <div style="height:12px"></div>
+  <div class="divider"></div>
+  <div style="height:20px"></div>
+  <div class="intro-desc" id="intro-desc">A sequence will now play. Observe carefully. All elements matter.</div>
+  <div class="intro-warning" id="intro-warning">One attempt only. Failure resets all progress.</div>
+  <button class="intro-btn" id="intro-btn" onclick="startSequence()">Begin Sequence</button>
+</div>
+ 
+<!-- SEQUENCE -->
+<div class="screen" id="screen-sequence">
+  <div class="seq-stage" id="seq-stage">
+    <div class="seq-countdown" id="seq-countdown"></div>
+  </div>
+  <div style="height:20px; font-size:10px; color:var(--text-muted); letter-spacing:0.25em; text-align:center; margin-top:16px;" id="seq-label">OBSERVE ALL ELEMENTS</div>
+</div>
+ 
+<!-- QUESTION -->
+<div class="screen" id="screen-question">
+  <div class="q-header" id="q-header">Memory Verification · Segment 01</div>
+  <div class="q-text" id="q-text"></div>
+  <div class="q-options" id="q-options"></div>
+</div>
+ 
+<!-- CORRECT -->
+<div class="screen" id="screen-correct">
+  <div class="result-icon">✦ Access Granted ✦</div>
+  <div class="result-title" id="correct-title">Sequence Verified</div>
+  <div style="height:8px"></div>
+  <div class="divider"></div>
+  <div style="height:16px"></div>
+  <div class="result-sub" id="correct-sub">Archive segment unlocked</div>
+  <button class="result-btn" id="correct-btn" onclick="nextSection()">Continue →</button>
+</div>
+ 
+<!-- FAIL -->
+<div class="screen" id="screen-fail">
+  <div class="fail-label">Memory Corrupted</div>
+  <div class="fail-title">Access Denied</div>
+  <div style="height:8px"></div>
+  <div class="divider" style="background:var(--red);"></div>
+  <div style="height:20px"></div>
+  <div class="fail-msg">
+    Your memory of the sequence was inaccurate.<br>
+    The archive cannot be accessed without full recall.<br>
+    All progress has been wiped.
+  </div>
+  <button class="fail-btn" onclick="resetAll()">Restart From Beginning</button>
+</div>
+ 
+<!-- COMPLETE -->
+<div class="screen" id="screen-complete">
+  <svg class="complete-eye" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="30" cy="30" rx="28" ry="16" stroke="#b8973a" stroke-width="0.8"/>
+    <circle cx="30" cy="30" r="9" stroke="#b8973a" stroke-width="0.8"/>
+    <circle cx="30" cy="30" r="3" fill="#b8973a" opacity="0.6"/>
+    <line x1="30" y1="2" x2="30" y2="10" stroke="#b8973a" stroke-width="0.5" opacity="0.4"/>
+    <line x1="30" y1="50" x2="30" y2="58" stroke="#b8973a" stroke-width="0.5" opacity="0.4"/>
+  </svg>
+  <div class="complete-title">Archive Unlocked</div>
+  <div class="complete-sub">All Segments Verified</div>
+  <div style="height:12px"></div>
+  <div class="divider"></div>
+  <div style="height:20px"></div>
+  <div class="complete-msg">
+    "You observed what was shown to you.<br>
+    But memory is not observation.<br>
+    The question was never what you saw.<br>
+    It was what you chose to remember."
+    <br><br>— ORACLE, Incident File 2089-10-31
+  </div>
+</div>
+ 
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+ 
+const SECTIONS = [
+  {
+    badge: "Archive Segment 01",
+    title: "Primary Calibration",
+    desc: "A sequence will now play. Observe all elements carefully before they disappear.",
+    warning: "One attempt only. Failure resets all progress.",
+    duration: 4000,
+    sequence: [
+      { type: 'group', duration: 4000, shapes: [
+        { kind: 'circle',   color: '#c0392b', size: 90,  x: 50, y: 50, filled: true },
+        { kind: 'square',   color: '#2471a3', size: 70,  x: 22, y: 50, filled: true },
+        { kind: 'triangle', color: '#27ae60', size: 80,  x: 78, y: 50, filled: true },
+      ]}
+    ],
+    bg: '#050608',
+    questions: [
+      {
+        text: "How many shapes were on screen?",
+        options: ["Two", "Three", "Four", "Five"],
+        correct: "Three"
+      },
+      {
+        text: "What color was the square?",
+        options: ["Red", "Green", "Blue", "Gold"],
+        correct: "Blue"
+      },
+      {
+        text: "What shape was green?",
+        options: ["Circle", "Square", "Triangle", "Diamond"],
+        correct: "Triangle"
+      },
+      {
+        text: "Was the circle larger or smaller than the triangle?",
+        options: ["Larger", "Smaller", "The same size", "There was no circle"],
+        correct: "Larger"
+      }
+    ]
+  },
+  {
+    badge: "Archive Segment 02",
+    title: "Peripheral Awareness",
+    desc: "Not all elements hold equal weight. Observe the full frame.",
+    warning: "One attempt only. Failure resets all progress.",
+    sequence: [
+      { type: 'group', duration: 5000, shapes: [
+        { kind: 'star',     color: '#d4a017', size: 120, x: 50,  y: 50,  filled: true,  pulse: true },
+        { kind: 'circle',   color: '#8e44ad', size: 28,  x: 10,  y: 15,  filled: true },
+        { kind: 'pentagon', color: '#ecf0f1', size: 30,  x: 88,  y: 82,  filled: false },
+      ]}
+    ],
+    bg: '#050608',
+    questions: [
+      {
+        text: "What shape was in the top left corner?",
+        options: ["Pentagon", "Circle", "Star", "Diamond"],
+        correct: "Circle"
+      },
+      {
+        text: "How many shapes were NOT in the center?",
+        options: ["One", "Two", "Three", "None"],
+        correct: "Two"
+      },
+      {
+        text: "What color was the smallest shape?",
+        options: ["Gold", "Purple", "White", "Red"],
+        correct: "Purple"
+      },
+      {
+        text: "Was the pentagon filled or just an outline?",
+        options: ["Filled", "Outlined only", "Half filled", "There was no pentagon"],
+        correct: "Outlined only"
+      }
+    ]
+  },
+  {
+    badge: "Archive Segment 03",
+    title: "Sequential Memory",
+    desc: "Shapes will appear and disappear one at a time. The sequence matters.",
+    warning: "One attempt only. Failure resets all progress.",
+    sequence: [
+      { type: 'step', duration: 1600, shapes: [
+        { kind: 'diamond', color: '#c0392b', size: 75, x: 50, y: 50, filled: true }
+      ]},
+      { type: 'step', duration: 1600, shapes: [
+        { kind: 'circle', color: '#2471a3', size: 55, x: 35, y: 50, filled: true },
+        { kind: 'circle', color: '#2471a3', size: 55, x: 65, y: 50, filled: true }
+      ]},
+      { type: 'step', duration: 1600, shapes: [
+        { kind: 'square', color: '#27ae60', size: 70, x: 50, y: 50, filled: true }
+      ]}
+    ],
+    bg: '#050608',
+    questions: [
+      {
+        text: "What shape appeared first?",
+        options: ["Circle", "Square", "Diamond", "Triangle"],
+        correct: "Diamond"
+      },
+      {
+        text: "What color were the shapes that appeared second?",
+        options: ["Red", "Blue", "Green", "Gold"],
+        correct: "Blue"
+      },
+      {
+        text: "How many shapes appeared in total across the entire sequence?",
+        options: ["Three", "Four", "Five", "Six"],
+        correct: "Four"
+      },
+      {
+        text: "Which color appeared exactly once in the sequence?",
+        options: ["Red", "Blue", "Green", "Red and Green"],
+        correct: "Red and Green"
+      }
+    ]
+  },
+  {
+    badge: "Archive Segment 04",
+    title: "Spatial Recall",
+    desc: "Five elements will appear simultaneously. Every position matters.",
+    warning: "One attempt only. Failure resets all progress.",
+    sequence: [
+      { type: 'group', duration: 5500, shapes: [
+        { kind: 'hexagon',   color: '#e67e22', size: 80,  x: 22,  y: 45,  filled: true },
+        { kind: 'circle',    color: '#ecf0f1', size: 60,  x: 50,  y: 50,  filled: true },
+        { kind: 'triangle',  color: '#c0392b', size: 42,  x: 80,  y: 18,  filled: true },
+        { kind: 'rectangle', color: '#8e44ad', size: 65,  x: 20,  y: 80,  filled: true },
+        { kind: 'star',      color: '#f1c40f', size: 38,  x: 82,  y: 82,  filled: true },
+      ]}
+    ],
+    bg: '#050608',
+    questions: [
+      {
+        text: "How many shapes were in the bottom half of the screen?",
+        options: ["One", "Two", "Three", "Four"],
+        correct: "Two"
+      },
+      {
+        text: "What was the color of the smallest shape?",
+        options: ["Orange", "White", "Red", "Yellow"],
+        correct: "Red"
+      },
+      {
+        text: "What shape was in the top right area of the screen?",
+        options: ["Star", "Hexagon", "Triangle", "Circle"],
+        correct: "Triangle"
+      },
+      {
+        text: "Were there more shapes on the left side or the right side?",
+        options: ["Left side", "Right side", "Equal on both sides", "All were centered"],
+        correct: "Equal on both sides"
+      },
+      {
+        text: "What color was the shape closest to the center?",
+        options: ["Orange", "White", "Purple", "Yellow"],
+        correct: "White"
+      }
+    ]
+  },
+  {
+    badge: "Archive Segment 05",
+    title: "Background Protocol",
+    desc: "Every layer of the sequence carries information. Observe the full frame.",
+    warning: "One attempt only. Failure resets all progress.",
+    sequence: [
+      { type: 'group', duration: 5000, shapes: [
+        { kind: 'diamond', color: '#ecf0f1', size: 68, x: 28, y: 50, filled: true },
+        { kind: 'circle',  color: '#ecf0f1', size: 68, x: 50, y: 50, filled: true },
+        { kind: 'triangle',color: '#ecf0f1', size: 68, x: 72, y: 50, filled: true },
+      ]}
+    ],
+    bg: '#0d1b3e',
+    questions: [
+      {
+        text: "What color was the background?",
+        options: ["Black", "Dark Navy Blue", "Deep Red", "Dark Green"],
+        correct: "Dark Navy Blue"
+      },
+      {
+        text: "How many shapes were on screen?",
+        options: ["Two", "Three", "Four", "One"],
+        correct: "Three"
+      },
+      {
+        text: "Were all the shapes the same color?",
+        options: ["Yes", "No — they were different", "Two were the same", "None were the same"],
+        correct: "Yes"
+      },
+      {
+        text: "What was different about this sequence compared to all the others?",
+        options: [
+          "All shapes were the same color",
+          "There were no shapes at all",
+          "The shapes were moving",
+          "The background was the same as before"
+        ],
+        correct: "All shapes were the same color"
+      },
+      {
+        text: "Which shape was on the left side of the screen?",
+        options: ["Circle", "Triangle", "Diamond", "All three were centered"],
+        correct: "Diamond"
+      }
+    ]
+  },
+  {
+    badge: "Archive Segment 06",
+    title: "Final Verification",
+    desc: "The last sequence. Multiple elements will appear and disappear at different intervals. Every detail has been observed before — trust nothing.",
+    warning: "One attempt only. Failure resets all progress. Two questions will be asked.",
+    sequence: [
+      { type: 'step', duration: 1000, shapes: [
+        { kind: 'hexagon', color: '#2471a3', size: 100, x: 50, y: 48, filled: false }
+      ]},
+      { type: 'step', duration: 1000, shapes: [
+        { kind: 'triangle', color: '#f1c40f', size: 38, x: 35, y: 48, filled: true },
+        { kind: 'triangle', color: '#f1c40f', size: 38, x: 50, y: 65, filled: true },
+        { kind: 'triangle', color: '#f1c40f', size: 38, x: 65, y: 48, filled: true },
+      ]},
+      { type: 'step', duration: 500, shapes: [
+        { kind: 'circle', color: '#ecf0f1', size: 55, x: 28, y: 72, filled: true }
+      ]},
+      { type: 'step', duration: 1000, shapes: [
+        { kind: 'square', color: '#8e44ad', size: 80, x: 75, y: 25, filled: true }
+      ]}
+    ],
+    bgStart: '#1a0a0a',
+    bgEnd: '#050608',
+    twoQuestions: true,
+    questions: [
+      {
+        text: "Was the hexagon filled or just an outline?",
+        options: ["Filled solid", "Outlined only", "Half filled", "There was no hexagon"],
+        correct: "Outlined only"
+      },
+      {
+        text: "How many yellow shapes appeared in the sequence?",
+        options: ["One", "Two", "Three", "Four"],
+        correct: "Three"
+      },
+      {
+        text: "Which shape was on screen for the shortest amount of time?",
+        options: ["Hexagon", "Triangles", "Circle", "Square"],
+        correct: "Circle"
+      },
+      {
+        text: "What shape appeared in the top right area of the screen?",
+        options: ["Circle", "Hexagon", "Triangle", "Square"],
+        correct: "Square"
+      },
+      {
+        text: "How many shapes appeared in total across the entire sequence?",
+        options: ["Four", "Five", "Six", "Seven"],
+        correct: "Six"
+      },
+      {
+        text: "Was the circle on the left side or the right side of the screen?",
+        options: ["Left side", "Right side", "Center", "There was no circle"],
+        correct: "Left side"
+      }
+    ]
+  }
+];
+ 
+// ─── STATE ──────────────────────────────────────────────────────────────────
+ 
+let currentSection = 0;
+let usedQuestions = [];
+let twoQPhase = 0;
+let twoQFirst = null;
+let animFrame = null;
+ 
+// ─── SCREEN TRANSITIONS ─────────────────────────────────────────────────────
+ 
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+ 
+// ─── BOOT SEQUENCE ──────────────────────────────────────────────────────────
+ 
+const bootMessages = [
+  { text: 'ORACLE v9.4.1 · Eclipse Tower Systems', tag: 'ok' },
+  { text: 'Loading incident archive: 2089-10-31 ...', tag: '' },
+  { text: 'Primary memory banks: PARTIAL CORRUPTION DETECTED', tag: 'warn' },
+  { text: 'Reconstructing blackout window 7:15 PM – 7:22 PM ...', tag: '' },
+  { text: 'Biometric verification required for access', tag: '' },
+  { text: 'Memory calibration protocol: ACTIVE', tag: 'warn' },
+  { text: 'Warning: All access attempts are logged', tag: '' },
+  { text: 'System ready. Awaiting authorization.', tag: 'ok' },
+];
+ 
+window.addEventListener('load', () => {
+  const container = document.getElementById('boot-lines');
+  bootMessages.forEach((msg, i) => {
+    const el = document.createElement('div');
+    el.className = 'boot-line';
+    el.innerHTML = msg.tag
+      ? `<span class="${msg.tag}">[${msg.tag.toUpperCase()}]</span> ${msg.text}`
+      : `<span style="color:var(--text-muted)">[INFO]</span> ${msg.text}`;
+    container.appendChild(el);
+    setTimeout(() => el.classList.add('show'), 400 + i * 280);
+  });
+  setTimeout(() => {
+    document.getElementById('boot-enter').classList.add('show');
+  }, 400 + bootMessages.length * 280 + 400);
+});
+ 
+function startGame() {
+  currentSection = 0;
+  usedQuestions = [];
+  showIntro();
+}
+ 
+// ─── INTRO ──────────────────────────────────────────────────────────────────
+ 
+function showIntro() {
+  const s = SECTIONS[currentSection];
+  document.getElementById('intro-badge').textContent = s.badge;
+  document.getElementById('intro-title').textContent = s.title;
+  document.getElementById('intro-desc').textContent = s.desc;
+  document.getElementById('intro-warning').textContent = s.warning;
+  showScreen('screen-intro');
+}
+ 
+// ─── SEQUENCE PLAYER ────────────────────────────────────────────────────────
+ 
+function startSequence() {
+  showScreen('screen-sequence');
+  const stage = document.getElementById('seq-stage');
+  const label = document.getElementById('seq-label');
+  const sec = SECTIONS[currentSection];
+ 
+  stage.style.background = sec.bg || '#050608';
+  label.textContent = 'OBSERVE ALL ELEMENTS';
+ 
+  // clear shapes
+  stage.querySelectorAll('.seq-shape').forEach(e => e.remove());
+  document.getElementById('seq-countdown').textContent = '';
+ 
+  const steps = sec.sequence;
+  let stepIdx = 0;
+ 
+  function runStep() {
+    if (stepIdx >= steps.length) {
+      // all steps done — brief pause then question
+      setTimeout(showQuestion, 1800);
+      return;
+    }
+    const step = steps[stepIdx];
+    stepIdx++;
+ 
+    // For section 6 background shift
+    if (sec.bgStart) {
+      stage.style.transition = 'background 0.5s';
+      stage.style.background = sec.bgStart;
+    }
+ 
+    const shapes = renderShapes(step.shapes, stage);
+    shapes.forEach(s => s.classList.add('shape-in'));
+ 
+    setTimeout(() => {
+      if (sec.bgEnd && stepIdx === steps.length) {
+        stage.style.background = sec.bgEnd;
+      }
+      shapes.forEach(s => {
+        s.classList.remove('shape-in');
+        s.classList.add('shape-out');
+      });
+      setTimeout(() => {
+        shapes.forEach(s => s.remove());
+        setTimeout(runStep, 200);
+      }, 300);
+    }, step.duration);
+  }
+ 
+  // small delay before starting
+  setTimeout(runStep, 600);
+}
+ 
+function renderShapes(shapeList, stage) {
+  return shapeList.map(def => {
+    const el = document.createElement('div');
+    el.className = 'seq-shape';
+    el.style.left = def.x + '%';
+    el.style.top = def.y + '%';
+    el.style.transform = 'translate(-50%, -50%)';
+ 
+    const svg = makeSVG(def);
+    el.appendChild(svg);
+ 
+    if (def.pulse) {
+      svg.style.animation = 'shapeIn 0.35s ease forwards, pulse-border 1.5s ease-in-out infinite 0.4s';
+      svg.style.filter = 'drop-shadow(0 0 12px ' + def.color + '44)';
+    }
+ 
+    stage.appendChild(el);
+    return el;
+  });
+}
+ 
+function makeSVG(def) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const sz = def.size;
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', sz);
+  svg.setAttribute('height', sz);
+  svg.setAttribute('viewBox', `0 0 ${sz} ${sz}`);
+ 
+  const fill = def.filled ? def.color : 'none';
+  const stroke = def.color;
+  const sw = def.filled ? '0' : '2.5';
+ 
+  let shape;
+  const c = sz / 2;
+  const r = sz * 0.42;
+ 
+  switch (def.kind) {
+    case 'circle':
+      shape = document.createElementNS(ns, 'circle');
+      shape.setAttribute('cx', c); shape.setAttribute('cy', c); shape.setAttribute('r', r);
+      break;
+    case 'square':
+      shape = document.createElementNS(ns, 'rect');
+      const sq = sz * 0.72; const so = (sz - sq) / 2;
+      shape.setAttribute('x', so); shape.setAttribute('y', so);
+      shape.setAttribute('width', sq); shape.setAttribute('height', sq);
+      break;
+    case 'rectangle':
+      shape = document.createElementNS(ns, 'rect');
+      shape.setAttribute('x', sz*0.1); shape.setAttribute('y', sz*0.25);
+      shape.setAttribute('width', sz*0.8); shape.setAttribute('height', sz*0.5);
+      break;
+    case 'triangle':
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', `${c},${sz*0.1} ${sz*0.9},${sz*0.88} ${sz*0.1},${sz*0.88}`);
+      break;
+    case 'diamond':
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', `${c},${sz*0.06} ${sz*0.9},${c} ${c},${sz*0.94} ${sz*0.1},${c}`);
+      break;
+    case 'star':
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', starPoints(c, c, r, r*0.45, 5));
+      break;
+    case 'hexagon':
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', polyPoints(c, c, r, 6, -Math.PI/2));
+      break;
+    case 'pentagon':
+      shape = document.createElementNS(ns, 'polygon');
+      shape.setAttribute('points', polyPoints(c, c, r, 5, -Math.PI/2));
+      break;
+    default:
+      shape = document.createElementNS(ns, 'circle');
+      shape.setAttribute('cx', c); shape.setAttribute('cy', c); shape.setAttribute('r', r);
+  }
+ 
+  shape.setAttribute('fill', fill);
+  shape.setAttribute('stroke', stroke);
+  shape.setAttribute('stroke-width', def.filled ? '0' : '2.5');
+  svg.appendChild(shape);
+  return svg;
+}
+ 
+function polyPoints(cx, cy, r, n, startAngle) {
+  let pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + (2 * Math.PI * i) / n;
+    pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
+  }
+  return pts.join(' ');
+}
+ 
+function starPoints(cx, cy, r1, r2, n) {
+  let pts = [];
+  for (let i = 0; i < n * 2; i++) {
+    const r = i % 2 === 0 ? r1 : r2;
+    const a = -Math.PI / 2 + (Math.PI * i) / n;
+    pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
+  }
+  return pts.join(' ');
+}
+ 
+// ─── QUESTION ───────────────────────────────────────────────────────────────
+ 
+function showQuestion(secondQ) {
+  const sec = SECTIONS[currentSection];
+  twoQPhase = secondQ ? 2 : (sec.twoQuestions ? 1 : 0);
+ 
+  // pick an unused question
+  const available = sec.questions.filter((_, i) => !usedQuestions.includes(i));
+  if (available.length === 0) { usedQuestions = []; }
+ 
+  let pool = sec.questions.map((q, i) => ({ q, i })).filter(({ i }) => !usedQuestions.includes(i));
+ 
+  // for 2-question sections, on second question avoid repeating first
+  let chosen;
+  if (twoQFirst !== null && secondQ) {
+    pool = pool.filter(({ i }) => i !== twoQFirst);
+  }
+  chosen = pool[Math.floor(Math.random() * pool.length)];
+  usedQuestions.push(chosen.i);
+  if (!secondQ) twoQFirst = chosen.i;
+ 
+  const q = chosen.q;
+ 
+  document.getElementById('q-header').textContent =
+    `Memory Verification · ${sec.badge}${twoQPhase === 2 ? ' · Question 2' : ''}`;
+  document.getElementById('q-text').textContent = q.text;
+ 
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+  shuffled.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'q-option anim-fadeup';
+    btn.textContent = opt;
+    btn.onclick = () => handleAnswer(opt, q.correct, shuffled, btn);
+    opts.appendChild(btn);
+  });
+ 
+  showScreen('screen-question');
+}
+ 
+function handleAnswer(selected, correct, allOpts, btn) {
+  const sec = SECTIONS[currentSection];
+  const allBtns = document.querySelectorAll('.q-option');
+  allBtns.forEach(b => b.classList.add('disabled'));
+ 
+  if (selected === correct) {
+    btn.classList.remove('disabled');
+    btn.classList.add('correct');
+ 
+    if (sec.twoQuestions && twoQPhase === 1) {
+      // need second question
+      setTimeout(() => showQuestion(true), 1400);
+    } else {
+      setTimeout(showCorrect, 1400);
+    }
+  } else {
+    btn.classList.remove('disabled');
+    btn.classList.add('wrong');
+    // highlight correct
+    allBtns.forEach(b => {
+      if (b.textContent === correct) { b.classList.remove('disabled'); b.classList.add('correct'); }
+    });
+    setTimeout(showFail, 2000);
+  }
+}
+ 
+// ─── RESULTS ────────────────────────────────────────────────────────────────
+ 
+function showCorrect() {
+  const sec = SECTIONS[currentSection];
+  document.getElementById('correct-title').textContent = 'Sequence Verified';
+  document.getElementById('correct-sub').textContent = sec.badge + ' — Access Granted';
+ 
+  const isLast = currentSection === SECTIONS.length - 1;
+  const btn = document.getElementById('correct-btn');
+  btn.textContent = isLast ? 'Access Archive →' : 'Continue →';
+  showScreen('screen-correct');
+}
+ 
+function nextSection() {
+  twoQFirst = null;
+  usedQuestions = [];
+  if (currentSection < SECTIONS.length - 1) {
+    currentSection++;
+    showIntro();
+  } else {
+    showScreen('screen-complete');
+  }
+}
+ 
+function showFail() {
+  showScreen('screen-fail');
+}
+ 
+function resetAll() {
+  currentSection = 0;
+  usedQuestions = [];
+  twoQFirst = null;
+  twoQPhase = 0;
+  showScreen('screen-boot');
+}
+</script>
+</body>
+</html>
+ 
