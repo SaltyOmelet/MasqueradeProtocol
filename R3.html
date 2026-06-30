@@ -305,6 +305,51 @@
   }
   .result-btn:hover { border-color: var(--gold); color: var(--gold); }
  
+  /* ── EVIDENCE CARD ── */
+  .evidence-card {
+    width: min(460px, 88vw);
+    border: 0.5px solid var(--gold-dim);
+    background: var(--panel);
+    padding: 24px 28px;
+    margin-top: 28px;
+    text-align: left;
+    position: relative;
+  }
+ 
+  .evidence-card::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 0.5px solid var(--border);
+    pointer-events: none;
+  }
+ 
+  .evidence-tag {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--red-bright);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+ 
+  .evidence-title {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--gold);
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+  }
+ 
+  .evidence-body {
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.7;
+  }
+ 
   /* ── FAIL SCREEN ── */
   #screen-fail {
     background: var(--black);
@@ -463,7 +508,6 @@
 <div class="screen" id="screen-intro">
   <div class="section-badge" id="intro-badge">Archive Segment 01</div>
   <div style="height:20px"></div>
-  <div class="intro-label">Memory Calibration Required</div>
   <div class="intro-title" id="intro-title">Attention Protocol</div>
   <div style="height:12px"></div>
   <div class="divider"></div>
@@ -496,6 +540,16 @@
   <div class="divider"></div>
   <div style="height:16px"></div>
   <div class="result-sub" id="correct-sub">Archive segment unlocked</div>
+ 
+  <div class="evidence-card">
+    <div class="evidence-tag" id="evidence-tag">Recovered Evidence</div>
+    <div class="evidence-title" id="evidence-title">Evidence Title Placeholder</div>
+    <div class="evidence-body" id="evidence-body">
+      Placeholder evidence text. This is where the recovered document, transcript, or recording
+      summary will appear once the real evidence content has been written.
+    </div>
+  </div>
+ 
   <button class="result-btn" id="correct-btn" onclick="nextSection()">Continue →</button>
 </div>
  
@@ -543,9 +597,14 @@
 const SECTIONS = [
   {
     badge: "Archive Segment 01",
-    title: "Primary Calibration",
-    desc: "A sequence will now play. Observe all elements carefully before they disappear.",
+    title: "Bar Receipt",
+    desc: "A transaction record from the Premium Lounge is locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress.",
+    evidence: {
+      tag: "Recovered Evidence · Financial Record",
+      title: "Bar Receipt — Premium Lounge",
+      body: "Placeholder evidence text. This is where the Premium Lounge order record will appear, showing two drinks served just before the blackout."
+    },
     duration: 4000,
     sequence: [
       { type: 'group', duration: 4000, shapes: [
@@ -580,9 +639,14 @@ const SECTIONS = [
   },
   {
     badge: "Archive Segment 02",
-    title: "Peripheral Awareness",
-    desc: "Not all elements hold equal weight. Observe the full frame.",
+    title: "Bartender Interview",
+    desc: "A recovered staff interview is locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress.",
+    evidence: {
+      tag: "Recovered Evidence · Witness Interview",
+      title: "Bartender Interview",
+      body: "Placeholder evidence text. This is where the recovered bartender statement will appear, confirming who stayed at the bar through the blackout."
+    },
     sequence: [
       { type: 'group', duration: 5000, shapes: [
         { kind: 'star',     color: '#d4a017', size: 120, x: 50,  y: 50,  filled: true,  pulse: true },
@@ -616,9 +680,14 @@ const SECTIONS = [
   },
   {
     badge: "Archive Segment 03",
-    title: "Sequential Memory",
-    desc: "Shapes will appear and disappear one at a time. The sequence matters.",
+    title: "Security Camera Footage",
+    desc: "A recovered camera still is locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress.",
+    evidence: {
+      tag: "Recovered Evidence · Camera Still",
+      title: "Security Hallway Camera",
+      body: "Placeholder evidence text. This is where the recovered camera timestamp and still image description will appear."
+    },
     sequence: [
       { type: 'step', duration: 1600, shapes: [
         { kind: 'diamond', color: '#c0392b', size: 75, x: 50, y: 50, filled: true }
@@ -657,9 +726,14 @@ const SECTIONS = [
   },
   {
     badge: "Archive Segment 04",
-    title: "Spatial Recall",
-    desc: "Five elements will appear simultaneously. Every position matters.",
+    title: "Speech Notes",
+    desc: "A recovered personal document is locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress.",
+    evidence: {
+      tag: "Recovered Evidence · Personal Document",
+      title: "Recovered Speech Notes",
+      body: "Placeholder evidence text. This is where the recovered handwritten notes will appear."
+    },
     sequence: [
       { type: 'group', duration: 5500, shapes: [
         { kind: 'hexagon',   color: '#e67e22', size: 80,  x: 22,  y: 45,  filled: true },
@@ -700,9 +774,14 @@ const SECTIONS = [
   },
   {
     badge: "Archive Segment 05",
-    title: "Background Protocol",
-    desc: "Every layer of the sequence carries information. Observe the full frame.",
+    title: "Text Conversation",
+    desc: "A recovered private message thread is locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress.",
+    evidence: {
+      tag: "Recovered Evidence · Private Message",
+      title: "Recovered Text Conversation",
+      body: "Placeholder evidence text. This is where the recovered message thread will appear."
+    },
     sequence: [
       { type: 'group', duration: 5000, shapes: [
         { kind: 'diamond', color: '#ecf0f1', size: 68, x: 28, y: 50, filled: true },
@@ -746,9 +825,14 @@ const SECTIONS = [
   },
   {
     badge: "Archive Segment 06",
-    title: "Final Verification",
-    desc: "The last sequence. Multiple elements will appear and disappear at different intervals. Every detail has been observed before — trust nothing.",
+    title: "Adrian's Voice Memo",
+    desc: "Adrian's private calendar entry and final recording are locked behind this memory check.",
     warning: "One attempt only. Failure resets all progress. Two questions will be asked.",
+    evidence: {
+      tag: "Recovered Evidence · Calendar & Audio",
+      title: "Private Calendar Entry & Voice Memo",
+      body: "Placeholder evidence text. This is where Adrian's calendar appointment and the recovered voice memo transcript will appear."
+    },
     sequence: [
       { type: 'step', duration: 1000, shapes: [
         { kind: 'hexagon', color: '#2471a3', size: 100, x: 50, y: 48, filled: false }
@@ -1098,6 +1182,10 @@ function showCorrect() {
   const sec = SECTIONS[currentSection];
   document.getElementById('correct-title').textContent = 'Sequence Verified';
   document.getElementById('correct-sub').textContent = sec.badge + ' — Access Granted';
+ 
+  document.getElementById('evidence-tag').textContent = sec.evidence.tag;
+  document.getElementById('evidence-title').textContent = sec.evidence.title;
+  document.getElementById('evidence-body').textContent = sec.evidence.body;
  
   const isLast = currentSection === SECTIONS.length - 1;
   const btn = document.getElementById('correct-btn');
